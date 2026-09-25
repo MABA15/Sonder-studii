@@ -1,0 +1,22 @@
+Sonder Studio V2.1 REV1 — Portable
+Base : SonderStudio_v2 fourni par l'utilisateur
+
+Ajouts principaux
+- Génétique : croisement Parents A/B, héritage + mutation, âge (nouveau-né = 46 % de la taille adulte), sexe, santé, dimorphisme, gènes liés.
+- Poses : poses personnalisées, pièces autour de leurs pivots, keyframes, durée, boucle, timeline, rotations X/Y/Z.
+- Sculpture : boîte pleine, ligne 3D, extrusion, symétrie gauche/droite + avant/arrière, sélection, copier/couper/coller, déplacer, rotation 90°.
+- MagicaVoxel : import/export .vox (VOX 150).
+- Blocs : 6 faces indépendantes, rendu opaque/cutout/transparent, variantes aléatoires ou animées + FPS.
+- Mise en scène : aperçu sur biome (plaine, forêt, marais/delta, désert, montagne, toundra).
+- Générateur : rampes de couleurs et textures terrain procédurales.
+- Palette : sélecteur étendu HEX + RGB + sélecteur natif depuis le bouton +.
+- Ergonomie modèle : panneaux outils (gauche) et aperçu (droite) masquables indépendamment, barre supérieure mobile défilante.
+- Compatibilité : anciens blocs V2 à face "side" migrés automatiquement vers Nord/Sud/Est/Ouest.
+
+Format export
+- manifest formatVersion 3
+- modèles formatVersion 2
+- terrains : top/bottom/north/south/east/west + metadata de rendu/variantes
+- modèles : gènes liés, poses personnalisées, traits sexuels, taux de mutation
+
+Cette REV n'inclut PAS le branchement au moteur Sonder, conformément à la demande.

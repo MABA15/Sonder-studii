@@ -1,7 +1,7 @@
 {
   "name": "Sonder Asset Studio",
   "short_name": "Sonder Studio",
-  "description": "Éditeur de blocs voxel et de sprites pour Sonder",
+  "description": "Studio portable de création voxel, modèles, génétique et poses pour Sonder",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

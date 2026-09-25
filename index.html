@@ -158,6 +158,37 @@ h1,h2,h3{margin:0;font-weight:700;letter-spacing:-.01em}
   .ed-preview,.ed-preview.big{grid-area:preview;position:static;width:auto;border-radius:0;padding-top:calc(env(viewport-segment-top 0 1) - env(viewport-segment-bottom 0 0) + 10px)}
 }
 
+
+/* ---------- REV1 : panneaux, poses, sélection, scène ---------- */
+.panel-toggle{min-width:42px;padding:0;font-size:17px}
+#modelView.hide-tools .ed-tools{display:none!important}
+#modelView.hide-preview #mPreview{display:none!important}
+@media (min-width:700px){
+  #modelView.hide-tools:not(.hide-preview).active{grid-template-columns:1fr 280px;grid-template-areas:"top top" "surf preview" "stage preview"}
+  #modelView.hide-preview:not(.hide-tools).active{grid-template-columns:230px 1fr;grid-template-areas:"top top" "tools surf" "tools stage"}
+  #modelView.hide-tools.hide-preview.active{grid-template-columns:1fr;grid-template-areas:"top" "surf" "stage"}
+}
+@media (max-width:699px){
+  #modelView.hide-tools .ed-stage{grid-row:3 / 5}
+  #modelView.hide-preview .ed-preview{display:none!important}
+  #modelView .ed-top{overflow-x:auto;scrollbar-width:none;flex-wrap:nowrap}
+  #modelView .ed-top::-webkit-scrollbar{display:none}
+  #modelView .ed-top>button,#modelView .ed-top>.save-state{flex:0 0 auto}
+  #modelView .ed-top>input{flex:1 0 92px;min-width:92px}
+}
+.pose-actions,.profile-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
+.pose-card{background:var(--bg);border:1px solid var(--line);border-radius:var(--r);padding:9px;margin-bottom:8px}
+.pose-card label{margin-bottom:8px}
+.pose-rot{display:grid;grid-template-columns:24px 1fr 52px;gap:6px;align-items:center;color:var(--muted);font-size:12px}
+.pose-rot input{min-height:0;padding:0;border:0;background:none;accent-color:var(--sand)}
+.pose-rot b{text-align:right;color:var(--text);font-variant-numeric:tabular-nums}
+.selection-chip{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(29,34,41,.94);border:1px solid var(--sand);border-radius:999px;padding:6px 10px;font-size:12px;z-index:4}
+.ramp-preview{display:flex;gap:4px;min-height:46px}
+.ramp-preview i{flex:1;border-radius:6px;border:1px solid rgba(255,255,255,.1)}
+.color-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.color-grid button{min-height:36px;padding:0;border-radius:7px}
+.scene-chip{font-size:11px;color:var(--moss)}
+
 /* ---------- Dialogues ---------- */
 .modal{position:fixed;inset:0;background:rgba(8,10,12,.62);display:flex;align-items:flex-end;justify-content:center;z-index:20;padding:0}
 .sheet{background:var(--panel);border:1px solid var(--line);border-radius:18px 18px 0 0;width:100%;max-width:520px;max-height:88dvh;overflow-y:auto;padding:18px 18px calc(18px + var(--sab));display:flex;flex-direction:column;gap:14px;animation:up .18s ease-out}
@@ -248,6 +279,7 @@ h1,h2,h3{margin:0;font-weight:700;letter-spacing:-.01em}
     <div class="actions-row">
       <button class="primary" id="btnExportAll"><span>⇪</span>Exporter pour Sonder</button>
       <button id="btnRestore"><span>⇩</span>Restaurer une sauvegarde</button>
+      <button id="btnTextureGen"><span>◫</span>Générateur textures / couleurs</button>
       <button id="btnSettings"><span>⚙</span>Réglages</button>
     </div>
     <input type="file" id="zipInput" accept=".zip,application/zip" hidden>
@@ -327,6 +359,9 @@ h1,h2,h3{margin:0;font-weight:700;letter-spacing:-.01em}
     <input id="mName" maxlength="48" aria-label="Nom du modèle">
     <span class="save-state" id="mSave"></span>
     <button class="mode-btn" id="mMutant">🧬<span> Mutations</span></button>
+    <button class="mode-btn" id="mPoseEdit">🎞<span> Poses</span></button>
+    <button class="panel-toggle" id="mToggleTools" aria-label="Afficher/masquer les outils">◧</button>
+    <button class="panel-toggle" id="mTogglePreview" aria-label="Afficher/masquer l’aperçu">◨</button>
     <button class="icon" id="mUndo" aria-label="Annuler">↶</button>
     <button class="icon" id="mRedo" aria-label="Rétablir">↷</button>
     <button class="icon" id="mMenu" aria-label="Plus d’options">⋯</button>
@@ -341,7 +376,7 @@ h1,h2,h3{margin:0;font-weight:700;letter-spacing:-.01em}
       <button class="icon" id="mFit" aria-label="Recentrer">⤢</button>
     </div>
   </div>
-  <aside class="ed-tools">
+  <aside class="ed-tools" id="mToolsPanel">
     <div id="mSculptPanel">
       <div class="tool-label">Outils</div>
       <div class="tool-row main m6" id="mToolRow"></div>
@@ -360,10 +395,35 @@ h1,h2,h3{margin:0;font-weight:700;letter-spacing:-.01em}
         <button id="mAddGene" class="primary">+ Mutation</button>
         <button id="mRandom">🎲 Individu</button>
         <button id="mPop">▦ Population</button>
+        <button id="mCross">⚭ Croisement</button>
+        <button id="mParentA">A Parent</button>
+        <button id="mParentB">B Parent</button>
+        <button id="mTraits">⚥ Sexe</button>
         <button id="mBase">↺ Base</button>
+      </div>
+      <div class="pose-card">
+        <div class="gene-row"><span>Âge</span><input id="mAge" type="range" min="0" max="1" step="0.01" value="1"><b id="mAgeVal">Adulte</b></div>
+        <div class="gene-row"><span>Sexe</span><div class="seg small" id="mSexSeg"><button data-sex="female">♀</button><button data-sex="male">♂</button></div></div>
+        <div class="gene-row"><span>Santé</span><input id="mHealth" type="range" min="0.15" max="1" step="0.01" value="1"><b id="mHealthVal">100 %</b></div>
       </div>
       <p class="muted genes-intro" id="mGenesIntro"></p>
       <div id="mGenesList"></div>
+    </div>
+    <div id="mPosePanel" class="hidden">
+      <div class="pose-actions"><button id="mNewPose" class="primary">+ Pose</button><button id="mDelPose">Supprimer</button></div>
+      <label>Pose<select id="mPoseSelect"></select></label>
+      <div class="pose-card">
+        <label>Durée (s)<input id="mPoseDuration" type="number" min="0.1" max="30" step="0.1" value="1"></label>
+        <label class="switch">Boucle<input id="mPoseLoop" type="checkbox" checked></label>
+        <label>Temps<input id="mPoseTime" type="range" min="0" max="1" step="0.001" value="0"></label>
+        <div class="pose-actions"><button id="mPoseKey">◆ Ajouter / mettre à jour la clé</button><button id="mPoseDelKey">◇ Supprimer la clé</button></div>
+      </div>
+      <div class="pose-card">
+        <div class="muted" style="font-size:12px;margin-bottom:6px">Rotation de la pièce active · glisse directement sur la pièce pour X/Y</div>
+        <div class="pose-rot"><span>X</span><input id="mRotX" type="range" min="-180" max="180" step="1"><b id="mRotXVal">0°</b></div>
+        <div class="pose-rot"><span>Y</span><input id="mRotY" type="range" min="-180" max="180" step="1"><b id="mRotYVal">0°</b></div>
+        <div class="pose-rot"><span>Z</span><input id="mRotZ" type="range" min="-180" max="180" step="1"><b id="mRotZVal">0°</b></div>
+      </div>
     </div>
   </aside>
   <aside class="ed-preview" id="mPreview">
@@ -379,7 +439,7 @@ h1,h2,h3{margin:0;font-weight:700;letter-spacing:-.01em}
 <div class="toast hidden" id="toast"></div>
 <script>(() => {
 'use strict';
-const VERSION = '2.0';
+const VERSION = '2.1-REV1';
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const CATS = {
   terrain: {label:'Terrain', glyph:'▦', color:'#6f5238', desc:'Blocs voxel : sols, roche, eau', kind:'block'},
@@ -388,7 +448,7 @@ const CATS = {
   flora:   {label:'Flore',   glyph:'♣', color:'#477a54', desc:'Arbres, buissons, plantes', kind:'model', rig:'plant'},
   agents:  {label:'Agents',  glyph:'◉', color:'#376c8e', desc:'Une espèce par agent : Sonder…', kind:'model', rig:'biped'}
 };
-const FACES = [{key:'top',label:'Dessus'},{key:'side',label:'Côtés'},{key:'bottom',label:'Dessous'}];
+const FACES = [{key:'top',label:'Dessus'},{key:'bottom',label:'Dessous'},{key:'north',label:'Nord'},{key:'south',label:'Sud'},{key:'east',label:'Est'},{key:'west',label:'Ouest'}];
 const SIZES = [16,32,64];
 const DEFAULT_PALETTE = ['#171b20','#2f3b2e','#6f5238','#9a7653','#b99a73','#d2c2a1','#54616b','#7f8c93','#c4d0d4','#477a54','#6ca36c','#9bc176','#376c8e','#5ca1c4','#d8e7ef','#f1f5f7'];
 const TOOLS = [
@@ -460,9 +520,9 @@ function normalizeAsset(a){
   const n = { id:a.id||uid(), name:a.name||'Sans nom', category:cat, size:a.size||32, tags:a.tags||[], variantOf:a.variantOf||null,
     createdAt:a.createdAt||a.updatedAt||new Date().toISOString(), updatedAt:a.updatedAt||new Date().toISOString(), thumb:a.thumb||null };
   n.type = a.type || (CATS[cat].kind==='block' ? 'block' : (a.frames||a.faces?.sprite) ? 'sprite' : 'model');
-  if(n.type==='block'){ n.faces = { top:a.faces?.top||null, side:a.faces?.side||null, bottom:a.faces?.bottom||null }; }
+  if(n.type==='block'){ n.faces = { top:a.faces?.top||null, bottom:a.faces?.bottom||null, north:a.faces?.north||a.faces?.side||null, south:a.faces?.south||a.faces?.side||null, east:a.faces?.east||a.faces?.side||null, west:a.faces?.west||a.faces?.side||null, side:a.faces?.side||null }; n.renderMode=a.renderMode||'opaque'; n.variantPlayback=a.variantPlayback||'none'; n.variantFps=a.variantFps||4; }
   else if(n.type==='sprite'){ n.frames = a.frames?.length ? a.frames : [a.faces?.sprite||null]; n.fps = a.fps||6; }
-  else { n.vpu=a.vpu||10; n.rig=a.rig||CATS[cat].rig||'static'; n.palette=a.palette||[]; n.parts=a.parts||[]; n.genes=a.genes||[]; delete n.size; }
+  else { n.vpu=a.vpu||10; n.rig=a.rig||CATS[cat].rig||'static'; n.palette=a.palette||[]; n.parts=a.parts||[]; n.genes=a.genes||[]; n.customPoses=a.customPoses||[]; n.sexTraits=a.sexTraits||{maleScale:1.04,femaleScale:1,maleHue:0,femaleHue:0}; n.mutationRate=a.mutationRate??0.06; delete n.size; }
   if(a.builtin) n.builtin=a.builtin;
   return n;
 }
@@ -492,7 +552,7 @@ function drawGround(ctx, blocks, n, W, H){
 async function makeThumbFromAsset(a){
   if(a.type==='model') return modelThumb(a);
   if(a.type==='block'){
-    const top=await canvasFrom(a.faces.top,a.size), side=await canvasFrom(a.faces.side||a.faces.top,a.size);
+    const top=await canvasFrom(a.faces.top,a.size), side=await canvasFrom(a.faces.east||a.faces.north||a.faces.side||a.faces.top,a.size);
     return thumbBlock(top, side);
   }
   return thumbSprite(await canvasFrom(a.frames[0], a.size));
@@ -672,7 +732,7 @@ async function openEditor(id){
   const a=assets.find(x=>x.id===id); if(!a){ go({view:'home'},false); return; }
   const kind=a.type==='block'?'block':'sprite';
   const surfaces=[];
-  if(kind==='block') for(const f of FACES) surfaces.push({key:f.key, label:f.label, cv:await canvasFrom(a.faces[f.key], a.size)});
+  if(kind==='block') for(const f of FACES){ const u=a.faces[f.key] || (['north','south','east','west'].includes(f.key)?a.faces.side:null) || (f.key==='bottom'?a.faces.bottom:null); surfaces.push({key:f.key, label:f.label, cv:await canvasFrom(u, a.size)}); }
   else for(let i=0;i<a.frames.length;i++) surfaces.push({key:'f'+i, label:'Frame '+(i+1), cv:await canvasFrom(a.frames[i], a.size)});
   tool='brush'; ed={asset:a, kind, surfaces, cur:0, hist:[], redo:[], view:{scale:1,ox:0,oy:0}, dirty:false, playing:true};
   $('#edName').value=a.name; setSaveState('ok');
@@ -690,7 +750,7 @@ function markDirty(){ if(!ed) return; ed.dirty=true; setSaveState('dirty'); clea
 async function flushSave(){
   clearTimeout(saveTimer); if(!ed||!ed.dirty) return;
   const e=ed, a=e.asset; e.dirty=false; setSaveState('saving');
-  if(e.kind==='block'){ e.surfaces.forEach(s=>a.faces[s.key]=isBlank(s.cv)?null:s.cv.toDataURL('image/png')); a.thumb=thumbBlock(e.surfaces[0].cv, isBlank(e.surfaces[1].cv)?e.surfaces[0].cv:e.surfaces[1].cv); }
+  if(e.kind==='block'){ e.surfaces.forEach(s=>a.faces[s.key]=isBlank(s.cv)?null:s.cv.toDataURL('image/png')); a.faces.side=a.faces.north||a.faces.south||a.faces.east||a.faces.west||null; const sideCv=e.surfaces.find(s=>s.key==='east')?.cv||e.surfaces.find(s=>s.key==='north')?.cv||e.surfaces[0].cv; a.thumb=thumbBlock(e.surfaces.find(s=>s.key==='top').cv, isBlank(sideCv)?e.surfaces[0].cv:sideCv); }
   else { a.frames=e.surfaces.map(s=>s.cv.toDataURL('image/png')); a.thumb=thumbSprite(e.surfaces[0].cv); }
   a.updatedAt=new Date().toISOString();
   try{ await DB.put(a); if(ed===e && !e.dirty) setSaveState('ok'); }catch(err){ toast('Échec de l’enregistrement : stockage plein ?'); e.dirty=true; setSaveState('dirty'); }
@@ -762,6 +822,25 @@ function setTool(t){ if(t==='picker'&&tool!=='picker') prevTool=tool; tool=t; re
 /* ----- Couleurs ----- */
 function updateColorUI(){ if(typeof mUpdateColor==='function') mUpdateColor(); $('#colorNow').style.background=rgba(color); $('#alphaInput').value=color[3]; $('#alphaVal').textContent=Math.round(color[3]/2.55)+'%'; $$('#palette .sw[data-c]').forEach(b=>b.classList.toggle('on', b.dataset.c===toHex(color))); }
 function setColor(c, keepAlpha=false){ color=[c[0],c[1],c[2], keepAlpha?color[3]:(c[3]??255)]; updateColorUI(); }
+
+async function advancedColorPicker(initial=toHex(color), title='Couleur étendue'){
+  const rgb=hexRgb(initial), v=await sheet(`<h3>${title}</h3>
+    <label>Couleur<input id="acNative" type="color" value="${initial}"></label>
+    <label>HEX<input id="acHex" value="${initial}" maxlength="7"></label>
+    <div class="gene-row"><span>Rouge</span><input id="acR" type="range" min="0" max="255" value="${rgb[0]}"><b id="acRv">${rgb[0]}</b></div>
+    <div class="gene-row"><span>Vert</span><input id="acG" type="range" min="0" max="255" value="${rgb[1]}"><b id="acGv">${rgb[1]}</b></div>
+    <div class="gene-row"><span>Bleu</span><input id="acB" type="range" min="0" max="255" value="${rgb[2]}"><b id="acBv">${rgb[2]}</b></div>
+    <div id="acSample" style="height:48px;border-radius:9px;border:1px solid var(--line);background:${initial}"></div>
+    <div class="acts"><button data-v="no">Annuler</button><button data-v="ok" class="primary">Utiliser</button></div>`, s=>{
+      const native=s.querySelector('#acNative'), hex=s.querySelector('#acHex'), rs=[s.querySelector('#acR'),s.querySelector('#acG'),s.querySelector('#acB')], vals=[s.querySelector('#acRv'),s.querySelector('#acGv'),s.querySelector('#acBv')], sample=s.querySelector('#acSample');
+      const syncFromRGB=()=>{ const h=rgbHex(rs.map(x=>+x.value)); native.value=hex.value=h; sample.style.background=h; rs.forEach((x,i)=>vals[i].textContent=x.value); };
+      rs.forEach(x=>x.oninput=syncFromRGB);
+      native.oninput=()=>{ const c=hexRgb(native.value); hex.value=native.value; sample.style.background=native.value; rs.forEach((x,i)=>{x.value=c[i];vals[i].textContent=c[i]}); };
+      hex.onchange=()=>{ let h=hex.value.trim(); if(!/^#[0-9a-f]{6}$/i.test(h)) return; h=h.toLowerCase(); native.value=h; sample.style.background=h; const c=hexRgb(h); rs.forEach((x,i)=>{x.value=c[i];vals[i].textContent=c[i]}); };
+    });
+  if(v!=='ok') return null; const h=$('#acHex')?.value; return /^#[0-9a-f]{6}$/i.test(h||'')?h.toLowerCase():initial;
+}
+
 $('#btnColor').onclick=()=>{ const i=$('#colorInput'); i.value=toHex(color); i.click(); };
 $('#colorInput').oninput=e=>setColor(fromHex(e.target.value), true);
 $('#alphaInput').oninput=e=>{ color[3]=+e.target.value; updateColorUI(); };
@@ -773,7 +852,7 @@ function renderPalette(){
     b.onclick=()=>{ if(lp==='done'){ lp=null; return; } setColor(fromHex(c)); };
     p.appendChild(b); });
   const add=document.createElement('button'); add.className='sw add'; add.textContent='+'; add.setAttribute('aria-label','Ajouter la couleur actuelle');
-  add.onclick=()=>{ const h=toHex(color); if(settings.palette.includes(h)) return toast('Déjà dans la palette'); settings.palette.push(h); saveSettings(); renderPalette(); toast('Couleur ajoutée à la palette'); };
+  add.onclick=async()=>{ const h=await advancedColorPicker(toHex(color),'Ajouter une couleur à la palette'); if(!h) return; setColor(fromHex(h),true); if(settings.palette.includes(h)) return toast('Déjà dans la palette'); settings.palette.push(h); saveSettings(); renderPalette(); renderMPalette(); toast('Couleur ajoutée à la palette'); };
   p.appendChild(add);
   const r=$('#recentColors'); r.innerHTML='';
   settings.recent.forEach(c=>{ const b=document.createElement('button'); b.className='sw'; b.style.background=c; b.onclick=()=>setColor(fromHex(c)); r.appendChild(b); });
@@ -956,11 +1035,13 @@ function renderPreview(t=performance.now()){
   if(!ed) return; const c=$('#previewCanvas'), x=c.getContext('2d'), W=c.width; x.setTransform(1,0,0,1,0,0); x.imageSmoothingEnabled=false; pvBackground(x,W);
   const S=ed.surfaces, mode=pvMode[ed.kind];
   if(ed.kind==='block'){
-    const top=S[0].cv, side=isBlank(S[1].cv)?top:S[1].cv, bottom=isBlank(S[2].cv)?side:S[2].cv;
-    if(mode==='cube'){ const p=cubeParts(top,side); drawCube(x,p.T,p.L,p.R,180,50,120,132); }
-    else if(mode==='under'){ x.save(); x.translate(0,W); x.scale(1,-1); const fs=flipV(side); drawCube(x,bottom,shaded(fs,.3),shaded(fs,.45),180,50,120,132); x.restore(); }
+    const get=k=>S.find(q=>q.key===k)?.cv, top=get('top'), east=get('east'), west=get('west'), north=get('north'), south=get('south');
+    const first=(...c)=>c.find(v=>v&&!isBlank(v))||top, left=first(north,west,east,south), right=first(east,south,west,north), btm=get('bottom'), bottom=first(btm,south,west,east,north);
+    const cube={T:top,L:shaded(left,.18),R:shaded(right,.34)};
+    if(mode==='cube'){ drawCube(x,cube.T,cube.L,cube.R,180,50,120,132); }
+    else if(mode==='under'){ x.save(); x.translate(0,W); x.scale(1,-1); const l=flipV(first(south,left)), r=flipV(first(west,right)); drawCube(x,bottom,shaded(l,.3),shaded(r,.45),180,50,120,132); x.restore(); }
     else if(mode==='tile'){ const cv=S[ed.cur].cv, k=Math.floor(W/(3*cv.width))||1, T=cv.width*k, o=(W-3*T)/2; for(let i=0;i<3;i++) for(let j=0;j<3;j++) x.drawImage(cv,o+i*T,o+j*T,T,T); }
-    else { drawGround(x,[cubeParts(top,side)],4,W,W); }
+    else { drawGround(x,[cube],4,W,W); }
   } else {
     if(mode==='anim'){ const n=S.length, i=n>1?Math.floor(t/1000*ed.asset.fps)%n:ed.cur; const cv=S[i].cv; const k=Math.floor(260/cv.width)||1; x.drawImage(cv,(W-cv.width*k)/2,(W-cv.height*k)/2,cv.width*k,cv.height*k);
       x.fillStyle='rgba(0,0,0,.45)'; x.fillRect(8,W-30,70,22); x.fillStyle='#fff'; x.font='13px system-ui'; x.fillText(`${i+1}/${n}`,16,W-14); }
@@ -974,7 +1055,7 @@ $('#btnEdMenu').onclick=async()=>{
   if(!ed) return; const block=ed.kind==='block', cur=ed.surfaces[ed.cur];
   const v=await sheet(`<h3>${esc(ed.asset.name)}</h3><div class="menu-list">
     <button data-v="import"><span>⇩</span>Importer un PNG dans ${block?'la face '+cur.label.toLowerCase():'la frame '+(ed.cur+1)}</button>
-    ${block?'<button data-v="copy"><span>⧉</span>Copier cette face vers…</button>':''}
+    ${block?'<button data-v="copy"><span>⧉</span>Copier cette face vers…</button><button data-v="blockset"><span>◫</span>Réglages bloc avancés</button>':''}
     <button data-v="flipH"><span>⇆</span>Retourner horizontalement</button>
     <button data-v="rot"><span>⟳</span>Pivoter de 90°</button>
     <button data-v="shift"><span>✥</span>Décaler d’un demi-bloc (tester les raccords)</button>
@@ -982,6 +1063,7 @@ $('#btnEdMenu').onclick=async()=>{
     <button data-v="tags"><span>#</span>Tags</button>
     <button data-v="exp"><span>⇪</span>Exporter cet asset</button>
     <button data-v="clear" class="danger"><span>✕</span>Effacer ${block?'cette face':'cette frame'}</button></div>`);
+  if(v==='blockset'){ const a=ed.asset, v2=await sheet(`<h3>Bloc avancé</h3><p>Les six faces peuvent être différentes. La transparence vient du canal alpha de tes PNG.</p><label>Rendu<select id="brMode"><option value="opaque" ${a.renderMode==='opaque'?'selected':''}>Opaque</option><option value="cutout" ${a.renderMode==='cutout'?'selected':''}>Découpe / végétation</option><option value="blend" ${a.renderMode==='blend'?'selected':''}>Transparent / eau / glace</option></select></label><label>Utilisation des variantes liées<select id="brVar"><option value="none">Aucune</option><option value="random" ${a.variantPlayback==='random'?'selected':''}>Variantes aléatoires</option><option value="animation" ${a.variantPlayback==='animation'?'selected':''}>Animation</option></select></label><label>FPS si animation<input id="brFps" type="number" min="1" max="30" value="${a.variantFps||4}"></label><p style="font-size:12px">Crée les variantes avec « Créer une variante » dans la bibliothèque. À l’export, elles restent liées par variantOf et ce mode indique au moteur comment les utiliser.</p><div class="acts"><button data-v="no">Annuler</button><button data-v="ok" class="primary">Valider</button></div>`); if(v2==='ok'){a.renderMode=$('#brMode').value;a.variantPlayback=$('#brVar').value;a.variantFps=+$('#brFps').value||4;markDirty();} }
   if(v==='import') pickFile('image/png', importPng);
   if(v==='copy') copyFaceDialog();
   if(v==='flipH') transformCur((x,N)=>{ x.translate(N,0); x.scale(-1,1); });
@@ -1060,7 +1142,7 @@ async function unzip(buf){
 async function exportAssets(list, label){
   if(!list.length) return toast('Rien à exporter pour l’instant');
   toast('Préparation de l’export…', 8000);
-  const files=[], manifest={format:'sonder-assets', formatVersion:2, studioVersion:VERSION, exportedAt:new Date().toISOString(), assetCount:list.length, assets:[]};
+  const files=[], manifest={format:'sonder-assets', formatVersion:3, studioVersion:VERSION, exportedAt:new Date().toISOString(), assetCount:list.length, assets:[]};
   const used=new Set();
   for(const a of list){
     const cat=CATS[a.category]; let sl=slug(a.name); while(used.has(a.category+'/'+sl)) sl+='_'+a.id.slice(-4); used.add(a.category+'/'+sl);
@@ -1068,18 +1150,17 @@ async function exportAssets(list, label){
     const meta={id:a.id, name:a.name, slug:sl, category:a.category, type:a.type, size:a.size, tags:a.tags||[], variantOf:a.variantOf||null, updatedAt:a.updatedAt};
     if(a.type==='model'){
       a.parts.forEach(p=>{ if(RT.has(p)) syncVox(p); });
-      const model={format:'sonder-model', formatVersion:1, id:a.id, name:a.name, category:a.category, rig:a.rig, voxelsPerBlock:a.vpu,
+      const model={format:'sonder-model', formatVersion:2, id:a.id, name:a.name, category:a.category, rig:a.rig, voxelsPerBlock:a.vpu,
         axes:{x:'avant', y:'gauche', z:'haut'}, unit:'1 unité = 1 bloc de terrain (= 1 unité monde du renderer)',
         palette:a.palette, parts:a.parts.map(p=>({id:p.id, name:p.name, role:p.role, parent:p.parent, pivot:p.pivot, voxels:p.vox})),
-        genes:a.genes.map(g=>({id:g.id, name:g.name, type:g.type, targets:g.targets, min:g.min, max:g.max, base:g.base}))};
+        genes:a.genes.map(g=>({id:g.id, name:g.name, type:g.type, targets:g.targets, min:g.min, max:g.max, base:g.base, link:g.link||null})), customPoses:a.customPoses||[], sexTraits:a.sexTraits||{}, mutationRate:a.mutationRate??.06};
       meta.rig=a.rig; meta.model=`${base}/model.json`; meta.preview=`${base}/preview.png`; delete meta.size;
       files.push({name:meta.model, data:te.encode(JSON.stringify(model))});
       const pv=makeCanvas(256), px=pv.getContext('2d'); renderModelFit(px,a,{x:0,y:0,w:256,h:256},{heading:0});
       files.push({name:meta.preview, data:await canvasBytes(pv)});
       if(a.builtin) meta.builtin=a.builtin;
     } else if(a.type==='block'){
-      meta.faces={}; const top=a.faces.top, side=a.faces.side||top, bottom=a.faces.bottom||side;
-      for(const [k,u] of Object.entries({top,side,bottom})){ if(!u) continue; const f=`${base}/${k}.png`; meta.faces[k]=f; files.push({name:f, data:dataUrlBytes(u)}); }
+      meta.faces={}; const top=a.faces.top, fallback=a.faces.side||a.faces.north||top, bottom=a.faces.bottom||fallback; const all={top,bottom,north:a.faces.north||fallback,south:a.faces.south||fallback,east:a.faces.east||fallback,west:a.faces.west||fallback}; for(const [k,u] of Object.entries(all)){ if(!u) continue; const f=`${base}/${k}.png`; meta.faces[k]=f; files.push({name:f, data:dataUrlBytes(u)}); } meta.renderMode=a.renderMode||'opaque'; meta.variantPlayback=a.variantPlayback||'none'; meta.variantFps=a.variantFps||4;
     } else {
       meta.fps=a.fps; meta.frames=[];
       const cvs=[]; for(let i=0;i<a.frames.length;i++){ const f=`${base}/frame_${String(i).padStart(3,'0')}.png`; meta.frames.push(f); files.push({name:f, data:dataUrlBytes(a.frames[i])}); cvs.push(await canvasFrom(a.frames[i], a.size)); }
@@ -1091,7 +1172,7 @@ async function exportAssets(list, label){
   }
   files.unshift({name:'studio.json', data:te.encode(JSON.stringify({palette:settings.palette},null,2))});
   files.unshift({name:'manifest.json', data:te.encode(JSON.stringify(manifest,null,2))});
-  files.unshift({name:'LISEZ-MOI.txt', data:te.encode(`Export Sonder Asset Studio ${VERSION}\n\nmanifest.json fait foi : il liste chaque asset et ses fichiers.\n- Blocs (terrain) : top.png, side.png, bottom.png\n- Modèles voxel (agents, faune, flore, objets) : model.json (pièces, pivots, rôles d’animation, palette, mutations) + preview.png\n- Sprites : frame_000.png… + sheet.png (planche horizontale) et fps\nLes PNG conservent la transparence.\n\nCe fichier sert aussi de sauvegarde : Accueil > Restaurer une sauvegarde.\n`)});
+  files.unshift({name:'LISEZ-MOI.txt', data:te.encode(`Export Sonder Asset Studio ${VERSION}\n\nmanifest.json fait foi : il liste chaque asset et ses fichiers.\n- Blocs (terrain) : 6 faces possibles (top/bottom/north/south/east/west), rendu transparent/cutout et mode variantes/animation\n- Modèles voxel (agents, faune, flore, objets) : model.json (pièces, pivots, rôles d’animation, palette, mutations) + preview.png\n- Sprites : frame_000.png… + sheet.png (planche horizontale) et fps\nLes PNG conservent la transparence.\n\nCe fichier sert aussi de sauvegarde : Accueil > Restaurer une sauvegarde.\n`)});
   const blob=zipStore(files), date=new Date().toISOString().slice(0,10);
   const name=`Sonder_${slug(label)}_${date}.zip`;
   if(list.length===assets.length){ settings.lastExport=new Date().toISOString(); saveSettings(); }
@@ -1120,8 +1201,8 @@ $('#zipInput').onchange=async e=>{
     let n=0;
     for(const m of man.assets){
       const a={id:m.id, name:m.name, category:m.category, size:m.size, tags:m.tags, variantOf:m.variantOf, updatedAt:m.updatedAt, fps:m.fps};
-      if(m.type==='model'&&m.model&&z[m.model]){ const mo=JSON.parse(td.decode(z[m.model])); Object.assign(a,{type:'model', rig:mo.rig, vpu:mo.voxelsPerBlock, palette:mo.palette, genes:mo.genes, parts:mo.parts.map(p=>({id:p.id,name:p.name,role:p.role,parent:p.parent,pivot:p.pivot,vox:p.voxels})), builtin:m.builtin}); }
-      else if(m.type==='block'||(!m.type&&CATS[m.category]?.kind==='block')) a.faces={top:await url(m.faces?.top), side:await url(m.faces?.side), bottom:await url(m.faces?.bottom)};
+      if(m.type==='model'&&m.model&&z[m.model]){ const mo=JSON.parse(td.decode(z[m.model])); Object.assign(a,{type:'model', rig:mo.rig, vpu:mo.voxelsPerBlock, palette:mo.palette, genes:mo.genes, parts:mo.parts.map(p=>({id:p.id,name:p.name,role:p.role,parent:p.parent,pivot:p.pivot,vox:p.voxels})), customPoses:mo.customPoses||[], sexTraits:mo.sexTraits||{maleScale:1.04,femaleScale:1,maleHue:0,femaleHue:0}, mutationRate:mo.mutationRate??.06, builtin:m.builtin}); }
+      else if(m.type==='block'||(!m.type&&CATS[m.category]?.kind==='block')){ a.faces={top:await url(m.faces?.top),bottom:await url(m.faces?.bottom),north:await url(m.faces?.north||m.faces?.side),south:await url(m.faces?.south||m.faces?.side),east:await url(m.faces?.east||m.faces?.side),west:await url(m.faces?.west||m.faces?.side)};a.renderMode=m.renderMode||'opaque';a.variantPlayback=m.variantPlayback||'none';a.variantFps=m.variantFps||4; }
       else if(m.frames) a.frames=await Promise.all(m.frames.map(url));
       else a.faces={sprite:await url(m.faces?.sprite)}; // format V0.1
       const na=normalizeAsset(a); if(mode==='copy' && assets.some(x=>x.id===na.id)){ na.id=uid(); na.name+=' (restauré)'; }
@@ -1134,6 +1215,9 @@ $('#zipInput').onchange=async e=>{
 };
 
 /* ================= Réglages ================= */
+$('#btnTextureGen').onclick=async()=>{ const v=await sheet(`<h3>Générateur textures / rampes</h3><div class="menu-list"><button data-v="ramp"><span>◐</span>Créer une rampe de couleurs</button><button data-v="tex"><span>▦</span>Créer un terrain texturé</button></div>`); if(v==='ramp')await makeColorRamp(); if(v==='tex')await makeTerrainTexture(); };
+async function makeColorRamp(){ let base=toHex(color), count=6, spread=.65; const v=await sheet(`<h3>Rampe de couleurs</h3><label>Couleur de base<input id="rgColor" type="color" value="${base}"></label><label>Nombre<input id="rgCount" type="range" min="3" max="12" value="6"></label><label>Contraste<input id="rgSpread" type="range" min="0.2" max="1" step="0.05" value="0.65"></label><div class="ramp-preview" id="rgPrev"></div><div class="acts"><button data-v="no">Annuler</button><button data-v="ok" class="primary">Ajouter à la palette</button></div>`, s=>{const draw=()=>{base=s.querySelector('#rgColor').value;count=+s.querySelector('#rgCount').value;spread=+s.querySelector('#rgSpread').value;const arr=Array.from({length:count},(_,i)=>shadeHex(base,(1-spread/2)+spread*i/Math.max(1,count-1)));s.querySelector('#rgPrev').innerHTML=arr.map(c=>`<i style="background:${c}"></i>`).join('');};['#rgColor','#rgCount','#rgSpread'].forEach(q=>s.querySelector(q).oninput=draw);draw();}); if(v==='ok'){const arr=Array.from({length:count},(_,i)=>shadeHex(base,(1-spread/2)+spread*i/Math.max(1,count-1)));arr.forEach(c=>{if(!settings.palette.includes(c))settings.palette.push(c)});saveSettings();renderPalette();renderMPalette();toast(arr.length+' couleurs ajoutées');}}
+async function makeTerrainTexture(){ let name='Nouveau matériau', base='#75614a', size=32, rough=.25; const v=await sheet(`<h3>Générateur de terrain</h3><label>Nom<input id="tgName" value="${name}"></label><label>Couleur<input id="tgColor" type="color" value="${base}"></label><label>Résolution<select id="tgSize"><option>16</option><option selected>32</option><option>64</option></select></label><label>Variation<input id="tgRough" type="range" min="0" max="0.7" step="0.05" value="0.25"></label><div class="acts"><button data-v="no">Annuler</button><button data-v="ok" class="primary">Créer</button></div>`); if(v!=='ok')return;name=$('#tgName').value.trim()||name;base=$('#tgColor').value;size=+$('#tgSize').value;rough=+$('#tgRough').value; const mk=(seed)=>{const c=makeCanvas(size),x=ctx2(c),rgb=hexRgb(base);let q=seed>>>0;for(let y=0;y<size;y++)for(let xx=0;xx<size;xx++){q=(q*1664525+1013904223)>>>0;const n=((q>>>8)&255)/255*2-1,f=1+n*rough;x.fillStyle=rgbHex(rgb.map(v=>v*f));x.fillRect(xx,y,1,1);}return c.toDataURL('image/png');};const a=normalizeAsset({id:uid(),name,category:'terrain',type:'block',size,tags:['généré'],faces:{top:mk(Date.now()),north:mk(Date.now()+1),south:mk(Date.now()+2),east:mk(Date.now()+3),west:mk(Date.now()+4),bottom:mk(Date.now()+5)},renderMode:'opaque'});a.thumb=await makeThumbFromAsset(a);await DB.put(a);assets.push(a);toast('Terrain créé');renderHome();}
 $('#btnSettings').onclick=async()=>{
   let persisted=false; try{ persisted=await navigator.storage?.persisted?.(); }catch{}
   const v=await sheet(`<h3>Réglages</h3>
@@ -1221,7 +1305,20 @@ function partRGB(hex,hue,light){ const k=hex+'|'+hue+'|'+light; let c=colCache.g
 
 /* ----- Poses (mêmes gestes que le moteur Sonder) ----- */
 const ease=x=>x*x*(3-2*x);
+const deg=x=>x*Math.PI/180;
+function customPoseMatrix(a,pose,t){
+  if(!pose||!String(pose).startsWith('custom:')) return null;
+  const id=String(pose).slice(7), P=(a.customPoses||[]).find(q=>q.id===id); if(!P||!P.keyframes?.length) return {root:null,parts:{}};
+  const d=Math.max(.1,P.duration||1), u=P.loop===false?clamp(t/d,0,1):((t/d)%1+1)%1, K=[...P.keyframes].sort((x,y)=>x.t-y.t);
+  let A=K[0],B=K[K.length-1],tt=0;
+  if(u<=K[0].t){A=B=K[0];} else if(u>=K[K.length-1].t){A=B=K[K.length-1];}
+  else for(let i=0;i<K.length-1;i++) if(u>=K[i].t&&u<=K[i+1].t){A=K[i];B=K[i+1];tt=(u-A.t)/Math.max(1e-6,B.t-A.t);break;}
+  const ids=new Set([...Object.keys(A.parts||{}),...Object.keys(B.parts||{})]), parts={};
+  ids.forEach(id=>{ const ar=A.parts?.[id]||[0,0,0], br=B.parts?.[id]||ar, r=ar.map((v,i)=>v+(br[i]-v)*tt); parts[id]=mMul(mMul(mRx(deg(r[0])),mRy(deg(r[1]))),mRz(deg(r[2]))); });
+  return {root:null,parts};
+}
 function posesFor(a,pose,t){
+  const custom=customPoseMatrix(a,pose,t); if(custom) return custom;
   const P={}, set=(role,M)=>a.parts.forEach(p=>{ if(p.role===role) P[p.id]=M; }); let root=null; const ph=t*2*Math.PI;
   if(a.rig==='biped'){
     if(pose==='walk'){ const s=Math.sin(ph*1.1); set('leg_l',mRy(.5*s)); set('leg_r',mRy(-.5*s)); set('arm_l',mRy(-.42*s)); set('arm_r',mRy(.42*s)); }
@@ -1240,15 +1337,21 @@ function posesFor(a,pose,t){
 }
 
 /* ----- Assemblage : génétique + pose + orientation ----- */
-function geneValue(G,vals){ const v=vals&&vals[G.id]; return v===undefined?G.base:v; }
+function geneValue(G,vals,all,stack=new Set()){
+  let v=vals&&vals[G.id]; if(v===undefined) v=G.base;
+  if(G.link?.source&&all&&!stack.has(G.id)){
+    const src=all.find(x=>x.id===G.link.source); if(src){ stack.add(G.id); const sv=geneValue(src,vals,all,stack), f=Number(G.link.factor??1), off=Number(G.link.offset??0); v=G.base+(sv-src.base)*f+off; const T=GENE_TYPES[G.type]; v=clamp(v,T?.lo??-1e9,T?.hi??1e9); stack.delete(G.id); }
+  }
+  return v;
+}
 function buildWorld(a,o){
   const parts=a.parts, byId=new Map(parts.map(p=>[p.id,p])), eff={};
   parts.forEach(p=>eff[p.id]={s:[1,1,1],grow:1,hue:0,light:1,show:true});
   let gs=[1,1,1];
-  if(!o.editor) for(const G of a.genes||[]){ const v=geneValue(G,o.genes), ty=G.type;
+  if(!o.editor){ const prof=o.genes||{}; const age=clamp(prof.__age??1,0,1), ageScale=.46+.54*age, sex=prof.__sex||'female', st=a.sexTraits||{}; const sexScale=sex==='male'?(st.maleScale||1):(st.femaleScale||1); gs=gs.map(x=>x*ageScale*sexScale); const sexHue=sex==='male'?(st.maleHue||0):(st.femaleHue||0); const health=clamp(prof.__health??1,.15,1); parts.forEach(p=>{eff[p.id].hue+=sexHue;eff[p.id].light*=.45+.55*health;}); for(const G of a.genes||[]){ const v=geneValue(G,o.genes,a.genes), ty=G.type;
     if(ty==='stature') gs[2]*=v; else if(ty==='frame') gs[1]*=v; else if(ty==='size'){ gs=gs.map(x=>x*v); }
     else for(const id of (G.targets&&G.targets.length?G.targets:parts.map(p=>p.id))){ const e=eff[id]; if(!e) continue;
-      if(ty==='scale') e.s=e.s.map(x=>x*v); else if(ty==='length') e.s[2]*=v; else if(ty==='grow') e.grow*=v; else if(ty==='hue') e.hue+=v; else if(ty==='light') e.light*=v; else if(ty==='show'&&v<.5) e.show=false; } }
+      if(ty==='scale') e.s=e.s.map(x=>x*v); else if(ty==='length') e.s[2]*=v; else if(ty==='grow') e.grow*=v; else if(ty==='hue') e.hue+=v; else if(ty==='light') e.light*=v; else if(ty==='show'&&v<.5) e.show=false; } } }
   const pose=o.editor?null:posesFor(a,o.pose||'idle',o.t||0);
   const root=mMul(pose&&pose.root?pose.root:mI(), mS(gs[0],gs[1],gs[2]));
   const W={}, visiting=new Set();
@@ -1443,8 +1546,8 @@ async function seedBuiltins(force){
 }
 
 /* ================= Éditeur de modèle ================= */
-let md=null, mTool='add', mBrush=1, mMirror=true, mRef='sonder', mIsolate=false, mCut=null, mMode='sculpt';
-let mPose='idle', mHeading=0, mSpin=false, mPopulation=null;
+let md=null, mTool='add', mBrush=1, mMirror=true, mMirrorFB=false, mRef='sonder', mIsolate=false, mCut=null, mMode='sculpt';
+let mPose='idle', mHeading=0, mSpin=false, mSceneBiome='none', mPopulation=null;
 const mStage=$('#mStage'), mCanvas=$('#mCanvas');
 
 function mSetSave(s){ const el=$('#mSave'); el.className='save-state '+(s==='ok'?'ok':''); el.innerHTML= s==='ok'?'✓<span> Enregistré</span>': s==='saving'?'…<span> Enregistrement</span>':'●<span> Modifié</span>'; }
@@ -1458,7 +1561,7 @@ document.addEventListener('visibilitychange',()=>{ if(document.hidden) mFlush();
 function openModelEditor(id){
   const a=assets.find(x=>x.id===id); if(!a) return go({view:'home'},false);
   if(!a.parts.length){ a.parts.push({id:'p_'+uid().slice(-6),name:RIGS[a.rig].roles[Object.keys(RIGS[a.rig].roles)[0]],role:Object.keys(RIGS[a.rig].roles)[0],parent:null,pivot:[0,0,0],vox:[]}); }
-  md={asset:a, active:a.parts[0].id, hist:[], redo:[], dirty:false, cam:{az:Math.PI/4,el:.72,zoom:1,ox:0,oy:0}, test:{}, t0:performance.now()};
+  a.customPoses=a.customPoses||[]; a.sexTraits=a.sexTraits||{maleScale:1.04,femaleScale:1,maleHue:0,femaleHue:0}; md={asset:a, active:a.parts[0].id, hist:[], redo:[], dirty:false, cam:{az:Math.PI/4,el:.72,zoom:1,ox:0,oy:0}, test:{__age:1,__sex:'female',__health:1}, t0:performance.now(), parentA:null,parentB:null, poseEditId:a.customPoses[0]?.id||null, poseTime:0};
   (a.genes||[]).forEach(g=>md.test[g.id]=g.base);
   mMode='sculpt'; mPopulation=null; mCut=null; mTool='add';
   $('#mName').value=a.name; mSetSave('ok');
@@ -1467,7 +1570,7 @@ function openModelEditor(id){
   mUpdateUndo();
 }
 function leaveModelEditor(){ if(md){ mFlush(); md=null; } }
-$('#mBack').onclick=()=>history.back();
+$('#mBack').onclick=()=>history.back(); $('#mToggleTools').onclick=()=>{ $('#modelView').classList.toggle('hide-tools'); requestAnimationFrame(()=>{mFit();mDraw();}); }; $('#mTogglePreview').onclick=()=>{ $('#modelView').classList.toggle('hide-preview'); requestAnimationFrame(()=>{mFit();mDraw();}); };
 $('#mName').onchange=e=>{ const n=e.target.value.trim(); if(n&&md){ md.asset.name=n; mDirty(); } };
 const activePart=()=>md.asset.parts.find(p=>p.id===md.active)||md.asset.parts[0];
 
@@ -1530,14 +1633,14 @@ function mirrorPartTo(p){ const q=partnerOf(p); if(!q) return toast('Aucune piè
   q.pivot=[p.pivot[0],-p.pivot[1],p.pivot[2]]; bump(q); mCommit(); toast(`Copié vers « ${q.name} »`); }
 
 /* ----- Outils ----- */
-const M_TOOLS=[{id:'add',icon:'＋',label:'Ajouter'},{id:'remove',icon:'－',label:'Retirer'},{id:'paint',icon:'✎',label:'Peindre'},{id:'pick',icon:'⌾',label:'Pipette'},{id:'orbit',icon:'⟳',label:'Tourner'},{id:'pivot',icon:'◎',label:'Pivot'}];
+const M_TOOLS=[{id:'add',icon:'＋',label:'Ajouter'},{id:'remove',icon:'－',label:'Retirer'},{id:'paint',icon:'✎',label:'Peindre'},{id:'box',icon:'▣',label:'Boîte'},{id:'line3d',icon:'╱',label:'Ligne 3D'},{id:'extrude',icon:'⇧',label:'Extruder'},{id:'select',icon:'⬚',label:'Sélection'},{id:'pick',icon:'⌾',label:'Pipette'},{id:'orbit',icon:'⟳',label:'Tourner'},{id:'pivot',icon:'◎',label:'Pivot'}];
 function renderMTools(){
   const row=$('#mToolRow'); row.innerHTML='';
   M_TOOLS.forEach(t=>{ const b=document.createElement('button'); b.className='tool'+(t.id===mTool?' on':''); b.innerHTML=`${t.icon}<small>${t.label}</small>`; b.setAttribute('aria-label',t.label); b.onclick=()=>{ mTool=t.id; renderMTools(); mDraw(); }; row.appendChild(b); });
   const o=$('#mOptRow'); o.innerHTML='';
   const opt=(l,on,fn)=>{ const b=document.createElement('button'); b.className='opt'+(on?' on':''); b.textContent=l; b.onclick=fn; o.appendChild(b); };
   [1,2,3].forEach(s=>opt(s===1?'1 voxel':s+'×'+s, mBrush===s, ()=>{ mBrush=s; renderMTools(); }));
-  opt('⇆ Miroir G/D', mMirror, ()=>{ mMirror=!mMirror; renderMTools(); mDraw(); });
+  opt('⇆ Miroir G/D', mMirror, ()=>{ mMirror=!mMirror; renderMTools(); mDraw(); }); opt('⇅ Sym. avant/arrière', mMirrorFB, ()=>{mMirrorFB=!mMirrorFB;renderMTools();mDraw();});
   opt(mCut==null?'✂ Coupe':'✂ Coupe : '+mCut, mCut!=null, ()=>{ mCut=mCut==null?Math.max(1,Math.round(modelHeightVox()/2)):null; renderMTools(); mDraw(); });
   if(mCut!=null){ opt('▲',false,()=>{ mCut++; renderMTools(); mDraw(); }); opt('▼',false,()=>{ mCut=Math.max(1,mCut-1); renderMTools(); mDraw(); }); }
   opt('Réf : '+({sonder:'Sonder',block:'Bloc',none:'aucune'}[mRef]), mRef!=='none', ()=>{ mRef={sonder:'block',block:'none',none:'sonder'}[mRef]; renderMTools(); mFit(); mDraw(); });
@@ -1545,13 +1648,13 @@ function renderMTools(){
 }
 function renderMPalette(){
   const p=$('#mPalette'); p.innerHTML='';
-  settings.palette.forEach(c=>{ const b=document.createElement('button'); b.className='sw'; b.style.background=c; b.dataset.c=c; b.onclick=()=>setColor(fromHex(c)); p.appendChild(b); });
+  settings.palette.forEach(c=>{ const b=document.createElement('button'); b.className='sw'; b.style.background=c; b.dataset.c=c; b.onclick=()=>setColor(fromHex(c)); p.appendChild(b); }); const add=document.createElement('button'); add.className='sw add'; add.textContent='+'; add.onclick=async()=>{ const h=await advancedColorPicker(toHex(color),'Nouvelle couleur'); if(!h)return; setColor(fromHex(h),true); if(!settings.palette.includes(h)){settings.palette.push(h);saveSettings();} renderMPalette(); renderPalette(); }; p.appendChild(add);
   const m=$('#mModelColors'); m.innerHTML='';
   if(md) md.asset.palette.forEach(c=>{ const b=document.createElement('button'); b.className='sw'; b.style.background=c; b.dataset.c=c; b.onclick=()=>setColor(fromHex(c)); m.appendChild(b); });
   mUpdateColor();
 }
 function mUpdateColor(){ const n=$('#mColorNow'); if(n) n.style.background=toHex(color); $$('#mPalette .sw,#mModelColors .sw').forEach(b=>b.classList.toggle('on',b.dataset.c===toHex(color))); }
-$('#mBtnColor').onclick=()=>{ const i=$('#colorInput'); i.value=toHex(color); i.click(); };
+$('#mBtnColor').onclick=async()=>{ const h=await advancedColorPicker(toHex(color),'Couleur du voxel'); if(h) setColor(fromHex(h),true); };
 function colorIndex(){ const a=md.asset, h=toHex(color); let i=a.palette.indexOf(h); if(i<0){ i=a.palette.length; a.palette.push(h); renderMPalette(); } return i; }
 
 /* ----- Historique ----- */
@@ -1593,7 +1696,7 @@ function mDrawNow(){
   // Référence de taille à côté du modèle.
   const refY=-(Math.max(1.5,modelRadius())+1.1);
   const faces=[];
-  const opts=sculpt?{editor:true,focus:mIsolate?md.active:null,dimAlpha:.18,cut:mCut}:{ground:true,genes:md.test,pose:mPose,t:(performance.now()-md.t0)/1000,heading:0};
+  const opts=sculpt?{editor:true,focus:mIsolate?md.active:null,dimAlpha:.18,cut:mCut}:{ground:true,genes:md.test,pose:mMode==='pose'&&currentPoseObj()?'custom:'+currentPoseObj().id:mPose,t:mMode==='pose'?(md.poseTime*(currentPoseObj()?.duration||1)):(performance.now()-md.t0)/1000,heading:0};
   collectFaces(a,opts,pc,faces);
   const ra=refAsset();
   if(mRef==='sonder'&&ra){ const rf=[]; collectFaces(ra,{ground:true,offset:[0,refY],alpha:.28},pc,rf); rf.forEach(f=>f.ref=true); faces.push(...rf); }
@@ -1608,7 +1711,7 @@ function mDrawNow(){
   // Pivot de la pièce active.
   if(sculpt){ const ap=activePart(); const q=sp((ap.pivot[0])/a.vpu,(ap.pivot[1])/a.vpu,(ap.pivot[2])/a.vpu); x.strokeStyle=mTool==='pivot'?'#d2ad72':'rgba(210,173,114,.8)'; x.lineWidth=2; x.beginPath(); x.arc(q[0],q[1],mTool==='pivot'?7:4,0,Math.PI*2); x.stroke(); }
   const vox=a.parts.reduce((s,p)=>s+rt(p).map.size,0);
-  $('#mHud').textContent = sculpt ? `${activePart().name} · ${vox} voxels · hauteur ${fmtNum(hv)} bloc${hv>=2?'s':''}` : `Individu test · ${RIGS[a.rig].poses.find(p=>p[0]===mPose)?.[1]||''}`;
+  $('#mHud').textContent = sculpt ? `${activePart().name} · ${vox} voxels · hauteur ${fmtNum(hv)} bloc${hv>=2?'s':''}` : mMode==='pose'?`Pose · ${currentPoseObj()?.name||''} · ${Math.round(md.poseTime*100)} %`:`Individu test · ${[...RIGS[a.rig].poses,...(a.customPoses||[]).map(p=>['custom:'+p.id,p.name])].find(p=>p[0]===mPose)?.[1]||''}`;
 }
 const fmtNum=v=>v.toLocaleString('fr-FR',{maximumFractionDigits:1});
 function modelRadius(){ let r=1; const v=md.asset.vpu; md.asset.parts.forEach(p=>{ const b=partFaces(p).bounds; if(b) r=Math.max(r,Math.abs(b[0])/v,Math.abs(b[3])/v,Math.abs(b[1])/v,Math.abs(b[4])/v); }); return r; }
@@ -1629,11 +1732,11 @@ function applyAt(cells, mode){
     if(mode==='add'){ if(!m.has(k)){ m.set(k,ci); changed=true; } }
     else if(mode==='remove'){ if(m.delete(k)) changed=true; }
     else if(mode==='paint'){ if(m.has(k)&&m.get(k)!==ci){ m.set(k,ci); changed=true; } } };
-  for(const [x,y,z] of cells){ put(p,x,y,z); if(partner){ const my=-1-y; if(!(partner===p&&my===y)) put(partner,x,my,z); } }
+  for(const [x,y,z] of cells){ put(p,x,y,z); if(partner){ const my=-1-y; if(!(partner===p&&my===y)) put(partner,x,my,z); } if(mMirrorFB){const mx=-1-x;if(mx!==x)put(p,mx,y,z); if(partner){const my=-1-y;if(mx!==x||my!==y)put(partner,mx,my,z);}} }
   if(changed){ bump(p); if(partner) bump(partner); }
   return changed;
 }
-let mPtrs=new Map(), mGest=null, mStroke=null, mTap=null, mOrbit=null;
+let mPtrs=new Map(), mGest=null, mStroke=null, mTap=null, mOrbit=null, mPoseDrag=null, mSelectAnchor=null, mSelection=null, mClipboard=null;
 mCanvas.addEventListener('pointerdown',e=>{
   if(!md) return; e.preventDefault(); mCanvas.setPointerCapture(e.pointerId);
   const r=mCanvas.getBoundingClientRect(), p={x:e.clientX-r.left,y:e.clientY-r.top}; mPtrs.set(e.pointerId,p);
@@ -1641,6 +1744,7 @@ mCanvas.addEventListener('pointerdown',e=>{
   if(mPtrs.size===1){
     if(mPopulation){ popTap(p); return; }
     const penOnlyTouch=settings.penOnly&&e.pointerType==='touch';
+    if(mMode==='pose'){ mDrawNow(); const hit=mPick(p.x,p.y); if(hit){md.active=hit.pid;renderPartBar();const r0=poseRotAt(currentPoseObj(),md.active,md.poseTime);mPoseDrag={x:p.x,y:p.y,r:r0};updatePoseRotUI();}else mOrbit={x:p.x,y:p.y,az:md.cam.az,el:md.cam.el}; return; }
     if(mMode!=='sculpt'||mTool==='orbit'||penOnlyTouch||e.button===2){ mOrbit={x:p.x,y:p.y,az:md.cam.az,el:md.cam.el}; return; }
     mStrokeStart(p);
   } else { if(mStroke){ mStrokeCancel(); } mOrbit=null; const arr=[...mPtrs.values()]; mGest={c0:cen(arr),d0:dst(arr),z0:md.cam.zoom,ox0:md.cam.ox,oy0:md.cam.oy}; }
@@ -1649,13 +1753,13 @@ const cen=a=>({x:a.reduce((s,p)=>s+p.x,0)/a.length,y:a.reduce((s,p)=>s+p.y,0)/a.
 mCanvas.addEventListener('pointermove',e=>{
   if(!md||!mPtrs.has(e.pointerId)) return; e.preventDefault(); const r=mCanvas.getBoundingClientRect(), p={x:e.clientX-r.left,y:e.clientY-r.top}; mPtrs.set(e.pointerId,p);
   if(mTap&&Math.hypot(p.x-mTap.start.x,p.y-mTap.start.y)>12) mTap.moved=true;
-  if(mOrbit){ md.cam.az=mOrbit.az+(p.x-mOrbit.x)*.01; md.cam.el=clamp(mOrbit.el+(p.y-mOrbit.y)*.006,.28,1.18); mDraw(); return; }
+  if(mPoseDrag&&mMode==='pose'){ const P=currentPoseObj(),k=ensurePoseKey(P), r=[...mPoseDrag.r]; r[1]+= (p.x-mPoseDrag.x)*.7; r[0]-=(p.y-mPoseDrag.y)*.7; k.parts[md.active]=r; updatePoseRotUI();mDraw();return;} if(mOrbit){ md.cam.az=mOrbit.az+(p.x-mOrbit.x)*.01; md.cam.el=clamp(mOrbit.el+(p.y-mOrbit.y)*.006,.28,1.18); mDraw(); return; }
   if(mGest&&mPtrs.size>=2){ const arr=[...mPtrs.values()], c=cen(arr), z=clamp(mGest.z0*dst(arr)/mGest.d0,.4,120); md.cam.ox=c.x-(mGest.c0.x-mGest.ox0)*z/mGest.z0; md.cam.oy=c.y-(mGest.c0.y-mGest.oy0)*z/mGest.z0; md.cam.zoom=z; mDraw(); return; }
   if(mStroke) mStrokeMove(p);
 });
 function mEnd(e){ if(!mPtrs.has(e.pointerId)) return; mPtrs.delete(e.pointerId);
   if(mStroke&&mPtrs.size===0){ mStrokeEnd(); }
-  if(mPtrs.size===0){ if(mTap&&mTap.n>=2&&!mTap.moved&&!mTap.drew&&performance.now()-mTap.t<350){ mTap.n===2?mSwap(md.hist,md.redo):mSwap(md.redo,md.hist); } mGest=null; mOrbit=null; mTap=null; } }
+  if(mPtrs.size===0){ if(mPoseDrag){mDirty();mPoseDrag=null;} if(mTap&&mTap.n>=2&&!mTap.moved&&!mTap.drew&&performance.now()-mTap.t<350){ mTap.n===2?mSwap(md.hist,md.redo):mSwap(md.redo,md.hist); } mGest=null; mOrbit=null; mTap=null; } }
 mCanvas.addEventListener('pointerup',mEnd); mCanvas.addEventListener('pointercancel',e=>{ if(mStroke) mStrokeCancel(); mEnd(e); });
 mCanvas.addEventListener('contextmenu',e=>e.preventDefault());
 mCanvas.addEventListener('wheel',e=>{ if(!md) return; e.preventDefault(); const r=mCanvas.getBoundingClientRect(); mZoomAt(e.deltaY<0?1.15:1/1.15,e.clientX-r.left,e.clientY-r.top); },{passive:false});
@@ -1663,11 +1767,11 @@ mCanvas.addEventListener('wheel',e=>{ if(!md) return; e.preventDefault(); const 
 function mStrokeStart(p){
   mDrawNow(); const hit=mPick(p.x,p.y), a=md.asset, ap=activePart();
   if(mTool==='pick'){ if(hit){ const part=a.parts.find(q=>q.id===hit.pid), ci=rt(part).map.get(KEY(hit.x,hit.y,hit.z)); if(ci!=null){ setColor(fromHex(a.palette[ci])); toast('Couleur prélevée'); } } return; }
-  if(mTool==='pivot'){ mSnapshot([ap]); const c=hit?[hit.x+.5,hit.y+.5,hit.z+.5]:groundVoxel(p.x,p.y).map(v=>v+.5); if(!hit) c[2]=0; ap.pivot=c; mCommit(); toast('Pivot placé'); return; }
+  if(mTool==='pivot'){ mSnapshot([ap]); const c=hit?[hit.x+.5,hit.y+.5,hit.z+.5]:groundVoxel(p.x,p.y).map(v=>v+.5); if(!hit) c[2]=0; ap.pivot=c; mCommit(); toast('Pivot placé'); return; } if(mTool==='extrude'){ if(!hit)return toast('Touche une face à extruder'); extrudeFace(hit); return; } if(mTool==='select'){ handleSelectionTap(hit,p); return; }
   if((mTool==='remove'||mTool==='paint')&&hit&&hit.pid!==ap.id){ md.active=hit.pid; renderPartBar(); mDraw(); toast('Pièce active : '+a.parts.find(q=>q.id===hit.pid).name); return; }
   const partner=mMirror?partnerOf(ap):null; mSnapshot(partner?[ap,partner]:[ap]);
-  mStroke={dir:null,plane:null,changed:false};
-  mStrokeApply(hit,p);
+  mStroke={dir:null,plane:null,changed:false,startHit:hit,startGround:hit?null:groundVoxel(p.x,p.y),lastHit:hit,lastGround:hit?null:groundVoxel(p.x,p.y)};
+  if(!['box','line3d'].includes(mTool)) mStrokeApply(hit,p);
 }
 function mStrokeApply(hit,p){
   let cells=null;
@@ -1680,27 +1784,49 @@ function mStrokeApply(hit,p){
   } else if(hit&&hit.pid===md.active){ if(mStroke.dir==null){ mStroke.dir=hit.d; } cells=brushCells(hit.x,hit.y,hit.z,hit.d); }
   if(cells&&applyAt(cells,mTool)){ mStroke.changed=true; if(mTap) mTap.drew=true; mDrawNow(); }
 }
-function mStrokeMove(p){ mStrokeApply(mPick(p.x,p.y),p); }
-function mStrokeEnd(){ if(mStroke.changed) mCommit(); else md.pending=null; mStroke=null; }
+function mStrokeMove(p){ const h=mPick(p.x,p.y); if(mStroke){mStroke.lastHit=h;if(!h)mStroke.lastGround=groundVoxel(p.x,p.y);} if(!['box','line3d'].includes(mTool))mStrokeApply(h,p); }
+function mStrokeEnd(){ if(mStroke&&['box','line3d'].includes(mTool)){ const A=mStroke.startHit?[mStroke.startHit.x,mStroke.startHit.y,mStroke.startHit.z]:(mStroke.startGround||[0,0,0]), B=mStroke.lastHit?[mStroke.lastHit.x,mStroke.lastHit.y,mStroke.lastHit.z]:(mStroke.lastGround||A); let cells=[]; if(mTool==='box'){const mn=A.map((v,i)=>Math.min(v,B[i])),mx=A.map((v,i)=>Math.max(v,B[i]));for(let x=mn[0];x<=mx[0];x++)for(let y=mn[1];y<=mx[1];y++)for(let z=mn[2];z<=mx[2];z++)cells.push([x,y,z]);}else{const n=Math.max(...A.map((v,i)=>Math.abs(B[i]-v)));for(let i=0;i<=n;i++){const t=n?i/n:0;cells.push(A.map((v,j)=>Math.round(v+(B[j]-v)*t)));}} if(cells.length&&applyAt(cells,'add')){mStroke.changed=true;} } if(mStroke?.changed) mCommit(); else md.pending=null; mStroke=null; }
 function mStrokeCancel(){ if(md.pending){ md.pending.forEach(s=>{ rt(s.p).map=s.map; bump(s.p); }); md.pending=null; } mStroke=null; mDraw(); }
+
+async function extrudeFace(hit){ const n=await askText('Extrusion','2','Extruder','Nombre de voxels (1 à 32)'); if(n===null)return;const steps=clamp(parseInt(n)||1,1,32),D=DIRS[hit.d],cells=[];for(let s=1;s<=steps;s++)cells.push([hit.x+D[0]*s,hit.y+D[1]*s,hit.z+D[2]*s]);const p=activePart(),partner=mMirror?partnerOf(p):null;mSnapshot(partner?[p,partner]:[p]);if(applyAt(cells,'add'))mCommit();else md.pending=null;}
+async function handleSelectionTap(hit,pnt){ const c=hit?[hit.x,hit.y,hit.z]:groundVoxel(pnt.x,pnt.y); if(!mSelectAnchor){mSelectAnchor=c;toast('Premier coin défini · touche le coin opposé');return;} const A=mSelectAnchor,B=c;mSelectAnchor=null;const mn=A.map((v,i)=>Math.min(v,B[i])),mx=A.map((v,i)=>Math.max(v,B[i]));mSelection={mn,mx,pid:md.active};const act=await sheet(`<h3>Sélection ${mx[0]-mn[0]+1}×${mx[1]-mn[1]+1}×${mx[2]-mn[2]+1}</h3><div class="menu-list"><button data-v="copy"><span>⧉</span>Copier</button><button data-v="cut"><span>✂</span>Couper</button><button data-v="del"><span>⌫</span>Supprimer</button><button data-v="paste"><span>⇩</span>Coller à l’origine de la sélection</button><button data-v="rz"><span>⟳</span>Tourner 90° autour de Z</button><button data-v="move"><span>✥</span>Déplacer…</button></div>`); if(!act)return;const part=activePart(),map=rt(part).map,inside=(x,y,z)=>x>=mn[0]&&x<=mx[0]&&y>=mn[1]&&y<=mx[1]&&z>=mn[2]&&z<=mx[2], vox=[];for(const [k,ci] of map){const d=DEC(k);if(inside(...d))vox.push([...d,ci]);} if(act==='copy'||act==='cut')mClipboard={vox:vox.map(v=>[v[0]-mn[0],v[1]-mn[1],v[2]-mn[2],v[3]])}; if(['cut','del','rz','move'].includes(act)){mSnapshot([part]);vox.forEach(v=>map.delete(KEY(v[0],v[1],v[2])));} if(act==='paste'){if(!mClipboard)return toast('Presse-papier vide');mSnapshot([part]);mClipboard.vox.forEach(v=>map.set(KEY(mn[0]+v[0],mn[1]+v[1],mn[2]+v[2]),v[3]));}
+  if(act==='rz'){const cx=(mn[0]+mx[0])/2,cy=(mn[1]+mx[1])/2;vox.forEach(v=>{const nx=Math.round(cx-(v[1]-cy)),ny=Math.round(cy+(v[0]-cx));map.set(KEY(nx,ny,v[2]),v[3]);});}
+  if(act==='move'){const d=await sheet(`<h3>Déplacer la sélection</h3><div class="menu-list"><button data-v="x+">Avant +X</button><button data-v="x-">Arrière −X</button><button data-v="y+">Gauche +Y</button><button data-v="y-">Droite −Y</button><button data-v="z+">Haut +Z</button><button data-v="z-">Bas −Z</button></div>`);const D={"x+":[1,0,0],"x-":[-1,0,0],"y+":[0,1,0],"y-":[0,-1,0],"z+":[0,0,1],"z-":[0,0,-1]}[d];if(D)vox.forEach(v=>map.set(KEY(v[0]+D[0],v[1]+D[1],v[2]+D[2]),v[3]));else vox.forEach(v=>map.set(KEY(v[0],v[1],v[2]),v[3]));}
+  if(['cut','del','paste','rz','move'].includes(act)){bump(part);mCommit();}else if(act==='copy')toast('Sélection copiée'); }
+
+/* ----- Éditeur de poses personnalisées ----- */
+function currentPoseObj(){ return (md?.asset.customPoses||[]).find(p=>p.id===md.poseEditId)||null; }
+function ensurePoseKey(P,t=md.poseTime){ let k=(P.keyframes||[]).find(x=>Math.abs(x.t-t)<.012); if(!k){k={t,parts:{}};P.keyframes=P.keyframes||[];P.keyframes.push(k);P.keyframes.sort((a,b)=>a.t-b.t);} return k; }
+function poseRotAt(P,pid,t=md.poseTime){ if(!P?.keyframes?.length)return [0,0,0]; const K=[...P.keyframes].sort((a,b)=>a.t-b.t); let A=K[0],B=K[K.length-1],u=0;if(t<=A.t)B=A;else if(t>=B.t)A=B;else for(let i=0;i<K.length-1;i++)if(t>=K[i].t&&t<=K[i+1].t){A=K[i];B=K[i+1];u=(t-A.t)/(B.t-A.t);break;}const a=A.parts?.[pid]||[0,0,0],b=B.parts?.[pid]||a;return a.map((v,i)=>v+(b[i]-v)*u); }
+function renderPoseEditor(){ if(!md)return; const a=md.asset; a.customPoses=a.customPoses||[]; if(!a.customPoses.length){a.customPoses.push({id:'pose_'+uid().slice(-6),name:'Ma pose',duration:1,loop:true,keyframes:[{t:0,parts:{}},{t:1,parts:{}}]});md.poseEditId=a.customPoses[0].id;mDirty();} if(!currentPoseObj())md.poseEditId=a.customPoses[0].id; const P=currentPoseObj();
+  $('#mPoseSelect').innerHTML=a.customPoses.map(p=>`<option value="${p.id}" ${p.id===P.id?'selected':''}>${esc(p.name)}</option>`).join(''); $('#mPoseDuration').value=P.duration||1;$('#mPoseLoop').checked=P.loop!==false;$('#mPoseTime').value=md.poseTime; updatePoseRotUI(); }
+function updatePoseRotUI(){ const P=currentPoseObj();if(!P)return;const r=poseRotAt(P,md.active,md.poseTime);[['X',0],['Y',1],['Z',2]].forEach(([k,i])=>{const el=$('#mRot'+k),v=$('#mRot'+k+'Val');if(el)el.value=r[i];if(v)v.textContent=Math.round(r[i])+'°';}); }
+function setPoseRotAxis(i,val){const P=currentPoseObj();if(!P)return;const k=ensurePoseKey(P),r=k.parts[md.active]||poseRotAt(P,md.active,md.poseTime);r[i]=+val;k.parts[md.active]=r; mDirty();updatePoseRotUI();mDraw();}
+$('#mNewPose').onclick=async()=>{const n=await askText('Nouvelle pose','Nouvelle pose','Créer');if(!n)return;const P={id:'pose_'+uid().slice(-6),name:n,duration:1,loop:true,keyframes:[{t:0,parts:{}},{t:1,parts:{}}]};md.asset.customPoses.push(P);md.poseEditId=P.id;md.poseTime=0;mDirty();renderPoseEditor();renderMPreviewCtl();mDraw();};
+$('#mDelPose').onclick=async()=>{const P=currentPoseObj();if(!P)return;if(await confirmBox('Supprimer la pose ?',P.name,'Supprimer',true)){md.asset.customPoses=md.asset.customPoses.filter(x=>x.id!==P.id);md.poseEditId=md.asset.customPoses[0]?.id||null;mDirty();renderPoseEditor();renderMPreviewCtl();mDraw();}};
+$('#mPoseSelect').onchange=e=>{md.poseEditId=e.target.value;md.poseTime=0;renderPoseEditor();mDraw();}; $('#mPoseDuration').onchange=e=>{const P=currentPoseObj();if(P){P.duration=clamp(+e.target.value||1,.1,30);mDirty();renderMPreviewCtl();}}; $('#mPoseLoop').onchange=e=>{const P=currentPoseObj();if(P){P.loop=e.target.checked;mDirty();}}; $('#mPoseTime').oninput=e=>{md.poseTime=+e.target.value;updatePoseRotUI();mDraw();};
+$('#mPoseKey').onclick=()=>{const P=currentPoseObj();if(P){ensurePoseKey(P);mDirty();toast('Image clé enregistrée');}}; $('#mPoseDelKey').onclick=()=>{const P=currentPoseObj();if(!P)return;const i=P.keyframes.findIndex(x=>Math.abs(x.t-md.poseTime)<.012);if(i>=0&&P.keyframes.length>1){P.keyframes.splice(i,1);mDirty();toast('Image clé supprimée');}else toast('Aucune clé ici');};
+[['X',0],['Y',1],['Z',2]].forEach(([k,i])=>$('#mRot'+k).oninput=e=>setPoseRotAxis(i,e.target.value));
 
 /* ----- Aperçu animé (poses, 16 directions) ----- */
 function renderMPreviewCtl(){
-  const a=md.asset, poses=RIGS[a.rig].poses; if(!poses.some(p=>p[0]===mPose)) mPose='idle';
+  const a=md.asset, poses=[...RIGS[a.rig].poses,...(a.customPoses||[]).map(p=>['custom:'+p.id,'★ '+p.name])]; if(!poses.some(p=>p[0]===mPose)) mPose='idle';
   $('#mPvModes').innerHTML=poses.map(([k,l])=>`<button data-p="${k}" class="${k===mPose?'on':''}">${l}</button>`).join('')+
-    `<button data-h="-1" aria-label="Tourner à gauche">⟲</button><button data-spin="1" class="${mSpin?'on':''}">Rotation</button><button data-h="1" aria-label="Tourner à droite">⟳</button>`;
+    `<button data-h="-1" aria-label="Tourner à gauche">⟲</button><button data-spin="1" class="${mSpin?'on':''}">Rotation</button><button data-h="1" aria-label="Tourner à droite">⟳</button><button data-scene="1">🏞 Scène</button>`;
   $$('#mPvModes [data-p]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); mPose=b.dataset.p; md.t0=performance.now(); renderMPreviewCtl(); if(mMode!=='sculpt') mDraw(); });
   $$('#mPvModes [data-h]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); mHeading=(mHeading+ +b.dataset.h+16)%16; renderMPreviewCtl(); });
-  $('#mPvModes [data-spin]').onclick=e=>{ e.stopPropagation(); mSpin=!mSpin; renderMPreviewCtl(); };
-  $('#mPvNote').textContent=`Direction ${mHeading+1}/16 · comme en jeu, avec les mutations de l’individu test.`;
+  $('#mPvModes [data-spin]').onclick=e=>{ e.stopPropagation(); mSpin=!mSpin; renderMPreviewCtl(); }; $('#mPvModes [data-scene]').onclick=e=>{e.stopPropagation();chooseSceneBiome();};
+  $('#mPvNote').textContent=`Direction ${mHeading+1}/16 · ${mSceneBiome==='none'?'fond neutre':'biome '+mSceneBiome} · mutations, âge, sexe et santé de l’individu test.`;
   $('#mPvLabel').textContent=poses.find(p=>p[0]===mPose)[1];
 }
 $('#mPreview').addEventListener('click',e=>{ if(e.target.closest('button')) return; if(window.innerWidth<700) $('#mPreview').classList.toggle('big'); });
 let lastSpin=0;
+async function chooseSceneBiome(){ const vals=[['none','Aucune'],['plaine','Plaine'],['foret','Forêt'],['marais','Marais / Delta'],['desert','Désert'],['montagne','Montagne'],['toundra','Toundra']];const v=await sheet(`<h3>Mise en scène</h3><p>Prévisualise le modèle sur un petit terrain avec une ambiance proche du jeu.</p><div class="menu-list">${vals.map(([k,l])=>`<button data-v="${k}">${k===mSceneBiome?'✓ ':''}${l}</button>`).join('')}</div>`);if(v){mSceneBiome=v;renderMPreviewCtl();}}
+function drawSceneBackdrop(x,W,H,biome){ if(biome==='none')return;const P={plaine:['#82a660','#587541'],foret:['#4e7348','#31523a'],marais:['#5f8065','#3c6261'],desert:['#c8ae6e','#8f7448'],montagne:['#858b88','#555e62'],toundra:['#c9d8d6','#879d9d']}[biome]||['#777','#555']; const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,shadeHex(P[0],.55));g.addColorStop(1,'#12151a');x.fillStyle=g;x.fillRect(0,0,W,H);x.save();x.translate(W/2,H*.72);for(let yy=-3;yy<=3;yy++)for(let xx=-4;xx<=4;xx++){const sx=(xx-yy)*24,sy=(xx+yy)*12;x.beginPath();x.moveTo(sx,sy-12);x.lineTo(sx+24,sy);x.lineTo(sx,sy+12);x.lineTo(sx-24,sy);x.closePath();x.fillStyle=((xx+yy)&1)?P[0]:P[1];x.globalAlpha=.72;x.fill();}x.restore();x.globalAlpha=1;}
 (function mLoop(ts){
   if(md&&route.view==='editor'){
-    if(mSpin&&ts-lastSpin>260){ mHeading=(mHeading+1)%16; lastSpin=ts; $('#mPvNote').textContent=`Direction ${mHeading+1}/16 · comme en jeu, avec les mutations de l’individu test.`; }
-    const c=$('#mPreviewCanvas'), x=c.getContext('2d'); x.setTransform(1,0,0,1,0,0); x.fillStyle='#15191e'; x.fillRect(0,0,c.width,c.height);
+    if(mSpin&&ts-lastSpin>260){ mHeading=(mHeading+1)%16; lastSpin=ts; $('#mPvNote').textContent=`Direction ${mHeading+1}/16 · ${mSceneBiome==='none'?'fond neutre':'biome '+mSceneBiome} · mutations, âge, sexe et santé.`; }
+    const c=$('#mPreviewCanvas'), x=c.getContext('2d'); x.setTransform(1,0,0,1,0,0); x.fillStyle='#15191e'; x.fillRect(0,0,c.width,c.height); drawSceneBackdrop(x,c.width,c.height,mSceneBiome);
     const t=(performance.now()-md.t0)/1000;
     // Cadrage stable : bornes calculées sur la pose debout.
     if(!md.pvB||md.pvKey!==mHeading+'|'+JSON.stringify(md.test)+md.asset.parts.length+rtVersion()){ const f=[]; collectFaces(md.asset,{ground:true,genes:md.test,pose:'idle',heading:mHeading},camProj({az:Math.PI/4,el:.72}),f); md.pvB=f.length?faceBounds(f):null; if(md.pvB){ const b=md.pvB, w=b[2]-b[0], h=b[3]-b[1]; md.pvB=[b[0]-w*.35,b[1]-h*.3,b[2]+w*.35,b[3]+h*.12]; } md.pvKey=mHeading+'|'+JSON.stringify(md.test)+md.asset.parts.length+rtVersion(); }
@@ -1713,12 +1839,12 @@ let lastSpin=0;
 function rtVersion(){ return md.asset.parts.reduce((s,p)=>s+rt(p).v,0); }
 
 /* ----- Mode mutant ----- */
-$('#mMutant').onclick=()=>{ mMode=mMode==='sculpt'?'mutant':'sculpt'; mPopulation=null; applyMode(); };
+$('#mMutant').onclick=()=>{ mMode=mMode==='mutant'?'sculpt':'mutant'; mPopulation=null; applyMode(); }; $('#mPoseEdit').onclick=()=>{mMode=mMode==='pose'?'sculpt':'pose';mPopulation=null;applyMode();};
 function applyMode(){
-  const mut=mMode==='mutant'; $('#mMutant').classList.toggle('on',mut); $('#mMutant').innerHTML=mut?'✎<span> Sculpter</span>':'🧬<span> Mutations</span>';
-  $('#mSculptPanel').classList.toggle('hidden',mut); $('#mGenesPanel').classList.toggle('hidden',!mut); $('#partBar').classList.toggle('hidden',mut);
-  $('#mZoomBox').classList.toggle('hidden',!!mPopulation);
-  if(mut) renderGenes(); mFit(); mDraw();
+  const mut=mMode==='mutant', pose=mMode==='pose'; $('#mMutant').classList.toggle('on',mut); $('#mPoseEdit').classList.toggle('on',pose);
+  $('#mMutant').innerHTML=mut?'✎<span> Sculpter</span>':'🧬<span> Mutations</span>'; $('#mPoseEdit').innerHTML=pose?'✎<span> Sculpter</span>':'🎞<span> Poses</span>';
+  $('#mSculptPanel').classList.toggle('hidden',mut||pose); $('#mGenesPanel').classList.toggle('hidden',!mut); $('#mPosePanel').classList.toggle('hidden',!pose); $('#partBar').classList.toggle('hidden',mut);
+  $('#mZoomBox').classList.toggle('hidden',!!mPopulation); if(mut){renderGenes();syncProfileUI();} if(pose)renderPoseEditor(); mFit(); mDraw();
 }
 function geneTargetsLabel(g){ const T=GENE_TYPES[g.type]; if(T.global) return 'tout le corps'; const a=md.asset; const n=(g.targets||[]).map(id=>a.parts.find(p=>p.id===id)?.name).filter(Boolean); return n.length?n.join(', '):'aucune pièce choisie'; }
 function fmtGene(g,v){ return g.type==='hue'?`${v>0?'+':''}${Math.round(v)}°`: g.type==='show'?(v>=.5?'présent':'absent'): g.type==='grow'?Math.round(v*100)+' %':'×'+(+v).toFixed(2); }
@@ -1729,14 +1855,14 @@ function renderGenes(){
   a.genes.forEach((g,gi)=>{ const T=GENE_TYPES[g.type]; const card=document.createElement('div'); card.className='gene';
     const v=md.test[g.id]??g.base;
     card.innerHTML=`<div class="gene-head"><input class="gene-name" value="${esc(g.name)}" aria-label="Nom de la mutation"><button class="icon ghost" data-del aria-label="Supprimer la mutation">✕</button></div>
-      <div class="gene-meta">${esc(T.label)} · <button class="linkbtn" data-tg>${esc(geneTargetsLabel(g))}</button></div>
+      <div class="gene-meta">${esc(T.label)} · <button class="linkbtn" data-tg>${esc(geneTargetsLabel(g))}</button> · <button class="linkbtn" data-link>${g.link?'lié à '+esc((a.genes.find(x=>x.id===g.link.source)||{}).name||'?'):'lier un gène'}</button></div>
       ${g.type==='show'?`<div class="gene-row"><span>Peut être</span><div class="seg small">${[['0','absente'],['both','variable'],['1','toujours']].map(([k,l])=>`<button data-sh="${k}" class="${(k==='both'&&g.min===0&&g.max===1)||(k==='0'&&g.max===0)||(k==='1'&&g.min===1)?'on':''}">${l}</button>`).join('')}</div></div>`:
       `<div class="gene-row"><span>Minimum</span><input type="range" data-k="min" min="${T.lo}" max="${T.hi}" step="${T.step}" value="${g.min}"><b>${fmtGene(g,g.min)}</b></div>
       <div class="gene-row"><span>Maximum</span><input type="range" data-k="max" min="${T.lo}" max="${T.hi}" step="${T.step}" value="${g.max}"><b>${fmtGene(g,g.max)}</b></div>`}
       <div class="gene-row test"><span>Test</span><input type="range" data-k="test" min="${Math.min(g.min,g.max)}" max="${Math.max(g.min,g.max)}" step="${T.step}" value="${v}"><b>${fmtGene(g,v)}</b></div>`;
     card.querySelector('.gene-name').onchange=e=>{ g.name=e.target.value.trim()||g.name; mDirty(); };
     card.querySelector('[data-del]').onclick=async()=>{ if(await confirmBox('Supprimer cette mutation ?',`« ${g.name} » ne pourra plus apparaître chez les individus.`,'Supprimer',true)){ a.genes.splice(gi,1); delete md.test[g.id]; mDirty(); renderGenes(); mDraw(); } };
-    card.querySelector('[data-tg]').onclick=()=>{ if(!T.global) chooseTargets(g); };
+    card.querySelector('[data-tg]').onclick=()=>{ if(!T.global) chooseTargets(g); }; card.querySelector('[data-link]').onclick=()=>chooseGeneLink(g);
     card.querySelectorAll('[data-sh]').forEach(b=>b.onclick=()=>{ const k=b.dataset.sh; [g.min,g.max]=k==='both'?[0,1]:k==='0'?[0,0]:[1,1]; g.base=g.max>=.5?1:0; md.test[g.id]=k==='both'?(md.test[g.id]??1):g.min; mDirty(); renderGenes(); mDraw(); });
     card.querySelectorAll('input[type=range]').forEach(r=>r.oninput=()=>{ const k=r.dataset.k, val=+r.value;
       if(k==='test') md.test[g.id]=val; else { g[k]=val; const lo=Math.min(g.min,g.max), hi=Math.max(g.min,g.max); md.test[g.id]=clamp(md.test[g.id]??g.base,lo,hi); mDirty(); }
@@ -1750,6 +1876,15 @@ async function chooseTargets(g){
     s=>s.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>{ const id=b.dataset.id; sel.has(id)?sel.delete(id):sel.add(id); b.classList.toggle('on'); }));
   if(v==='ok'){ g.targets=[...sel]; mDirty(); renderGenes(); mDraw(); }
 }
+async function chooseGeneLink(g){
+  const others=md.asset.genes.filter(x=>x.id!==g.id); if(!others.length) return toast('Ajoute au moins deux gènes');
+  const cur=g.link||{}, v=await sheet(`<h3>Lier « ${esc(g.name)} »</h3><p>La valeur suivra automatiquement un autre gène. Exemple : grand gabarit → grandes cornes.</p>
+    <label>Gène source<select id="glSrc"><option value="">Aucun lien</option>${others.map(x=>`<option value="${x.id}" ${x.id===cur.source?'selected':''}>${esc(x.name)}</option>`).join('')}</select></label>
+    <label>Facteur<input id="glFactor" type="number" step="0.1" value="${cur.factor??1}"></label>
+    <label>Décalage<input id="glOffset" type="number" step="0.05" value="${cur.offset??0}"></label>
+    <div class="acts"><button data-v="no">Annuler</button><button data-v="ok" class="primary">Valider</button></div>`);
+  if(v!=='ok')return; const src=$('#glSrc')?.value; g.link=src?{source:src,factor:+($('#glFactor')?.value||1),offset:+($('#glOffset')?.value||0)}:null; mDirty(); renderGenes(); mDraw();
+}
 $('#mAddGene').onclick=async()=>{
   const v=await sheet(`<h3>Nouvelle mutation</h3><div class="menu-list">${Object.entries(GENE_TYPES).map(([k,T])=>`<button data-v="${k}"><span>🧬</span><div><b>${T.label}</b><br><small class="muted">${T.desc}</small></div></button>`).join('')}</div>`);
   if(!v) return; const T=GENE_TYPES[v], a=md.asset;
@@ -1757,10 +1892,17 @@ $('#mAddGene').onclick=async()=>{
   a.genes.push(g); md.test[g.id]=g.base; mDirty(); renderGenes(); mDraw();
   if(!T.global) chooseTargets(g);
 };
-const randGenes=()=>{ const o={}; (md.asset.genes||[]).forEach(g=>{ const T=GENE_TYPES[g.type], lo=Math.min(g.min,g.max), hi=Math.max(g.min,g.max); let v=lo+Math.random()*(hi-lo); if(g.type==='show') v=Math.random()<.5?lo:hi; v=Math.round(v/T.step)*T.step; o[g.id]=v; }); return o; };
+const randGenes=()=>{ const o={__age:1,__sex:Math.random()<.5?'female':'male',__health:1}; (md.asset.genes||[]).forEach(g=>{ if(g.link?.source)return; const T=GENE_TYPES[g.type], lo=Math.min(g.min,g.max), hi=Math.max(g.min,g.max); let v=lo+Math.random()*(hi-lo); if(g.type==='show') v=Math.random()<.5?lo:hi; v=Math.round(v/T.step)*T.step; o[g.id]=v; }); (md.asset.genes||[]).filter(g=>g.link?.source).forEach(g=>o[g.id]=geneValue(g,o,md.asset.genes)); return o; };
 $('#mRandom').onclick=()=>{ md.test=randGenes(); mPopulation=null; applyMode(); };
-$('#mBase').onclick=()=>{ md.test={}; (md.asset.genes||[]).forEach(g=>md.test[g.id]=g.base); mPopulation=null; applyMode(); };
+$('#mBase').onclick=()=>{ md.test={__age:1,__sex:'female',__health:1}; (md.asset.genes||[]).forEach(g=>md.test[g.id]=g.base); mPopulation=null; applyMode(); syncProfileUI(); };
 $('#mPop').onclick=()=>{ mPopulation=Array.from({length:9},randGenes); applyMode(); toast('Touche un individu pour l’étudier'); };
+function syncProfileUI(){ if(!md)return; const t=md.test; const age=$('#mAge'),health=$('#mHealth'); if(age){age.value=t.__age??1;$('#mAgeVal').textContent=(t.__age??1)<.08?'Nouveau-né':(t.__age??1)<.55?'Jeune':'Adulte';} if(health){health.value=t.__health??1;$('#mHealthVal').textContent=Math.round((t.__health??1)*100)+' %';} $$('#mSexSeg [data-sex]').forEach(b=>b.classList.toggle('on',b.dataset.sex===(t.__sex||'female'))); }
+$('#mAge').oninput=e=>{md.test.__age=+e.target.value;syncProfileUI();mDraw();}; $('#mHealth').oninput=e=>{md.test.__health=+e.target.value;syncProfileUI();mDraw();}; $$('#mSexSeg [data-sex]').forEach(b=>b.onclick=()=>{md.test.__sex=b.dataset.sex;syncProfileUI();mDraw();});
+$('#mParentA').onclick=()=>{md.parentA={...md.test};toast('Parent A mémorisé');}; $('#mParentB').onclick=()=>{md.parentB={...md.test};toast('Parent B mémorisé');};
+function crossChild(A,B){ const o={__age:0,__sex:Math.random()<.5?'female':'male',__health:1}, rate=md.asset.mutationRate??.06; (md.asset.genes||[]).forEach(g=>{ const T=GENE_TYPES[g.type], lo=Math.min(g.min,g.max),hi=Math.max(g.min,g.max); let v=Math.random()<.5?(A[g.id]??g.base):(B[g.id]??g.base); if(Math.random()<rate){ const span=(hi-lo)*.12; v+= (Math.random()*2-1)*span; } if(g.type==='show')v=v>=.5?1:0; else v=Math.round(clamp(v,lo,hi)/T.step)*T.step; o[g.id]=v; }); (md.asset.genes||[]).filter(g=>g.link?.source).forEach(g=>o[g.id]=geneValue(g,o,md.asset.genes)); return o; }
+$('#mCross').onclick=()=>{ if(!md.parentA||!md.parentB)return toast('Mémorise d’abord un Parent A et un Parent B'); mPopulation=Array.from({length:9},()=>crossChild(md.parentA,md.parentB)); applyMode(); toast('9 petits générés · âge nouveau-né à 46 % de la taille adulte'); };
+$('#mTraits').onclick=async()=>{ const st=md.asset.sexTraits||{}, v=await sheet(`<h3>Dimorphisme sexuel</h3><label>Échelle mâle<input id="sxM" type="number" min="0.5" max="2" step="0.01" value="${st.maleScale||1}"></label><label>Échelle femelle<input id="sxF" type="number" min="0.5" max="2" step="0.01" value="${st.femaleScale||1}"></label><label>Décalage teinte mâle (°)<input id="sxMH" type="number" min="-180" max="180" step="1" value="${st.maleHue||0}"></label><label>Décalage teinte femelle (°)<input id="sxFH" type="number" min="-180" max="180" step="1" value="${st.femaleHue||0}"></label><label>Taux mutation au croisement<input id="sxMut" type="number" min="0" max="1" step="0.01" value="${md.asset.mutationRate??.06}"></label><div class="acts"><button data-v="no">Annuler</button><button data-v="ok" class="primary">Valider</button></div>`); if(v==='ok'){md.asset.sexTraits={maleScale:+$('#sxM').value,femaleScale:+$('#sxF').value,maleHue:+$('#sxMH').value,femaleHue:+$('#sxFH').value};md.asset.mutationRate=+$('#sxMut').value;mDirty();mDraw();} };
+
 function popCells(w,h){ const n=mPopulation.length, cols=w>h?(n>6?5:3):3, rows=Math.ceil(n/cols), cw=w/cols, ch=(h-40)/rows; return mPopulation.map((g,i)=>({g,x:(i%cols)*cw,y:40+Math.floor(i/cols)*ch,w:cw,h:ch})); }
 function drawPopulation(x,w,h){
   x.fillStyle='rgba(231,227,218,.8)'; x.font='13px system-ui'; x.fillText('Population simulée : 9 individus tirés au hasard dans tes plages de mutation',12,24);
@@ -1773,18 +1915,25 @@ function drawPopulation(x,w,h){
 }
 function popTap(p){ const {w,h}=mStageSize(); const c=popCells(w,h).find(c=>p.x>=c.x&&p.x<c.x+c.w&&p.y>=c.y&&p.y<c.y+c.h); if(!c) return; md.test={...c.g}; mPopulation=null; applyMode(); renderGenes(); toast('Individu chargé dans le test'); }
 
+/* ----- Compatibilité MagicaVoxel .vox (VOX 150, modèle unique) ----- */
+function u32le(a,o){return (a[o]|a[o+1]<<8|a[o+2]<<16|a[o+3]<<24)>>>0;} function str4(a,o){return String.fromCharCode(a[o],a[o+1],a[o+2],a[o+3]);}
+async function importVoxFile(file){ const a=new Uint8Array(await file.arrayBuffer()); if(str4(a,0)!=='VOX ')throw Error('Fichier VOX invalide'); let o=20, size=[0,0,0],vox=[],pal=null;while(o+12<=a.length){const id=str4(a,o),n=u32le(a,o+4),ch=u32le(a,o+8),d=o+12;if(id==='SIZE'&&n>=12)size=[u32le(a,d),u32le(a,d+4),u32le(a,d+8)];if(id==='XYZI'&&n>=4){const c=u32le(a,d);for(let i=0;i<c;i++)vox.push([a[d+4+i*4],a[d+5+i*4],a[d+6+i*4],a[d+7+i*4]-1]);}if(id==='RGBA'&&n>=1024){pal=[];for(let i=0;i<256;i++)pal.push(rgbHex([a[d+i*4],a[d+i*4+1],a[d+i*4+2]]));}o=d+n+ch;} if(!vox.length)throw Error('Aucun voxel');const P=activePart();mSnapshot([P]);rt(P).map.clear();const colors=pal||Array.from({length:256},(_,i)=>rgbHex([i,i,i]));vox.forEach(v=>{let ci=md.asset.palette.indexOf(colors[v[3]]);if(ci<0){ci=md.asset.palette.length;md.asset.palette.push(colors[v[3]]);}rt(P).map.set(KEY(v[0]-Math.floor(size[0]/2),v[1]-Math.floor(size[1]/2),v[2]),ci);});bump(P);mCommit();renderMPalette();mFit();mDraw(); }
+function exportVoxModel(){const a=md.asset, all=[];let mn=[1e9,1e9,1e9],mx=[-1e9,-1e9,-1e9];a.parts.forEach(p=>{for(const[k,ci]of rt(p).map){const d=DEC(k);all.push([...d,ci]);d.forEach((v,i)=>{mn[i]=Math.min(mn[i],v);mx[i]=Math.max(mx[i],v);});}});if(!all.length)return toast('Modèle vide');const sz=mx.map((v,i)=>v-mn[i]+1);if(Math.max(...sz)>255)return toast('MagicaVoxel limite ce format à 255 voxels par axe');const pal=[...a.palette].slice(0,255);const chunks=[];const chunk=(id,data)=>{const h=new Uint8Array(12+data.length),dv=new DataView(h.buffer);for(let i=0;i<4;i++)h[i]=id.charCodeAt(i);dv.setUint32(4,data.length,true);dv.setUint32(8,0,true);h.set(data,12);return h;};let d=new Uint8Array(12),dv=new DataView(d.buffer);sz.forEach((v,i)=>dv.setUint32(i*4,v,true));chunks.push(chunk('SIZE',d));d=new Uint8Array(4+all.length*4);dv=new DataView(d.buffer);dv.setUint32(0,all.length,true);all.forEach((v,i)=>{d[4+i*4]=v[0]-mn[0];d[5+i*4]=v[1]-mn[1];d[6+i*4]=v[2]-mn[2];d[7+i*4]=Math.min(255,v[3]+1);});chunks.push(chunk('XYZI',d));d=new Uint8Array(1024);for(let i=0;i<256;i++){const c=hexRgb(pal[i]||'#000000');d[i*4]=c[0];d[i*4+1]=c[1];d[i*4+2]=c[2];d[i*4+3]=255;}chunks.push(chunk('RGBA',d));const clen=chunks.reduce((s,c)=>s+c.length,0),main=new Uint8Array(12),mdv=new DataView(main.buffer);'MAIN'.split('').forEach((c,i)=>main[i]=c.charCodeAt(0));mdv.setUint32(4,0,true);mdv.setUint32(8,clen,true);const head=new Uint8Array(8);'VOX '.split('').forEach((c,i)=>head[i]=c.charCodeAt(0));new DataView(head.buffer).setUint32(4,150,true);downloadBlob(new Blob([head,main,...chunks],{type:'application/octet-stream'}),slug(a.name)+'.vox'); }
+function downloadBlob(blob,name){const u=URL.createObjectURL(blob),A=document.createElement('a');A.href=u;A.download=name;document.body.appendChild(A);A.click();A.remove();setTimeout(()=>URL.revokeObjectURL(u),1000);}
+let voxInput=document.createElement('input');voxInput.type='file';voxInput.accept='.vox';voxInput.hidden=true;document.body.appendChild(voxInput);voxInput.onchange=async()=>{try{if(voxInput.files[0])await importVoxFile(voxInput.files[0]);toast('VOX importé');}catch(e){toast('Import VOX : '+e.message,4000)}voxInput.value='';};
+
 /* ----- Menu du modèle ----- */
 $('#mMenu').onclick=async()=>{
   if(!md) return; const a=md.asset;
   const v=await sheet(`<h3>${esc(a.name)}</h3><div class="menu-list">
     <button data-v="rig"><span>⚙</span>Squelette : ${RIGS[a.rig].label}</button>
     <button data-v="tags"><span>#</span>Tags</button>
-    <button data-v="exp"><span>⇪</span>Exporter ce modèle</button>
+    <button data-v="exp"><span>⇪</span>Exporter ce modèle</button><button data-v="voxIn"><span>⇩</span>Importer MagicaVoxel .vox dans la pièce active</button><button data-v="voxOut"><span>⬡</span>Exporter MagicaVoxel .vox</button><button data-v="scene"><span>🏞</span>Mise en scène</button>
     ${a.builtin?'<button data-v="orig"><span>↺</span>Revenir au modèle d’origine de Sonder</button>':''}
     <button data-v="clearall" class="danger"><span>✕</span>Tout effacer</button></div>`);
   if(v==='rig'){ const r=await sheet(`<h3>Squelette</h3><p>Il décide des poses d’animation disponibles.</p><div class="menu-list">${Object.entries(RIGS).map(([k,R])=>`<button data-v="${k}">${k===a.rig?'✓ ':''}${R.label}</button>`).join('')}</div>`); if(r){ a.rig=r; mDirty(); renderMPreviewCtl(); } }
   if(v==='tags'){ const n=await askText('Tags',(a.tags||[]).join(', '),'Enregistrer','ex. forêt, nocturne'); if(n!==null){ a.tags=parseTags(n); mDirty(); } }
-  if(v==='exp'){ await mFlush(); exportAssets([a],a.name); }
+  if(v==='exp'){ await mFlush(); exportAssets([a],a.name); } if(v==='voxIn')voxInput.click(); if(v==='voxOut')exportVoxModel(); if(v==='scene')chooseSceneBiome();
   if(v==='orig'&&await confirmBox('Revenir à l’original ?','Tes modifications sur ce modèle seront remplacées par la version extraite du moteur.','Revenir',true)){
     const e=builtinCatalog().find(e=>e.key===a.builtin.key), n=await makeBuiltin(e); Object.assign(a,{parts:n.parts,palette:n.palette,genes:n.genes,rig:n.rig,vpu:n.vpu}); md.hist=[]; md.redo=[]; mDirty(); openModelEditor(a.id); }
   if(v==='clearall'&&await confirmBox('Tout effacer ?','Toutes les pièces seront vidées (annulable).','Effacer',true)){ mSnapshot(a.parts); a.parts.forEach(p=>{ rt(p).map.clear(); bump(p); }); mCommit(); }
