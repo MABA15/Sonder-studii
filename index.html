@@ -83,7 +83,7 @@ h1,h2,h3{margin:0;font-weight:700;letter-spacing:-.01em}
 .empty button{margin-top:12px}
 
 /* ---------- Éditeur ---------- */
-#editorView.active{display:grid;grid-template-columns:1fr;grid-template-rows:auto auto 1fr auto;grid-template-areas:"top" "surf" "stage" "tools";position:relative}
+.edview.active{display:grid;grid-template-columns:1fr;grid-template-rows:auto auto 1fr auto;grid-template-areas:"top" "surf" "stage" "tools";position:relative}
 .ed-top{grid-area:top;display:flex;align-items:center;gap:6px;padding:8px 10px;background:var(--panel);border-bottom:1px solid var(--line)}
 .ed-top input{flex:1;min-width:0;background:transparent;border-color:transparent;font-weight:650;font-size:16px;padding:0 6px}
 .ed-top input:focus{border-color:var(--line);background:var(--bg)}
@@ -136,7 +136,7 @@ h1,h2,h3{margin:0;font-weight:700;letter-spacing:-.01em}
 
 /* Déplié : 3 colonnes */
 @media (min-width:700px){
-  #editorView.active{grid-template-columns:230px 1fr 280px;grid-template-rows:auto auto 1fr;grid-template-areas:"top top top" "tools surf preview" "tools stage preview"}
+  .edview.active{grid-template-columns:230px 1fr 280px;grid-template-rows:auto auto 1fr;grid-template-areas:"top top top" "tools surf preview" "tools stage preview"}
   .ed-tools{border-top:none;border-right:1px solid var(--line);overflow-y:auto;padding:12px}
   .tool-row{flex-wrap:wrap;overflow:visible}
   .tool-row.main .tool{width:calc(25% - 5px);min-width:0}
@@ -153,7 +153,7 @@ h1,h2,h3{margin:0;font-weight:700;letter-spacing:-.01em}
 }
 /* Mode Flex (à moitié plié) : canevas en haut, outils en bas */
 @media (vertical-viewport-segments:2){
-  #editorView.active{grid-template-columns:1fr 240px;grid-template-rows:auto auto calc(env(viewport-segment-bottom 0 0) - 110px) 1fr;grid-template-areas:"top top" "surf surf" "stage stage" "tools preview"}
+  .edview.active{grid-template-columns:1fr 240px;grid-template-rows:auto auto calc(env(viewport-segment-bottom 0 0) - 110px) 1fr;grid-template-areas:"top top" "surf surf" "stage stage" "tools preview"}
   .ed-tools{padding-top:calc(env(viewport-segment-top 0 1) - env(viewport-segment-bottom 0 0) + 10px);border-right:1px solid var(--line)}
   .ed-preview,.ed-preview.big{grid-area:preview;position:static;width:auto;border-radius:0;padding-top:calc(env(viewport-segment-top 0 1) - env(viewport-segment-bottom 0 0) + 10px)}
 }
@@ -186,6 +186,38 @@ h1,h2,h3{margin:0;font-weight:700;letter-spacing:-.01em}
   .ed-top .icon{min-width:40px}
   #heroCanvas{width:150px;height:130px}
   .hero-text h1{font-size:25px}
+}
+
+/* ---------- Modèles voxel & mutations ---------- */
+.mode-btn{min-height:40px;padding:0 10px;white-space:nowrap}
+.mode-btn.on{border-color:var(--moss);color:var(--moss)}
+.surf small{font-size:11px}
+.genes-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.genes-actions button{min-height:42px;font-size:14px}
+.genes-intro{font-size:13px;margin:10px 0}
+#mGenesPanel{max-height:46dvh;overflow-y:auto}
+.gene{background:var(--bg);border:1px solid var(--line);border-radius:var(--r);padding:8px 10px;margin-bottom:8px}
+.gene-head{display:flex;gap:6px;align-items:center}
+.gene-name{font-weight:650;min-height:36px;background:transparent;border-color:transparent;padding:0 4px}
+.gene-name:focus{border-color:var(--line)}
+.gene-head .icon{min-height:34px;min-width:34px;font-size:14px}
+.gene-meta{font-size:12px;color:var(--muted);margin:2px 4px 6px}
+.linkbtn{min-height:0;padding:0;border:none;background:none;color:var(--sand);text-decoration:underline;font-size:12px}
+.gene-row{display:grid;grid-template-columns:68px 1fr 64px;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);min-height:34px}
+.gene-row input[type=range]{min-height:0;padding:0;border:none;background:none;accent-color:var(--sand)}
+.gene-row b{color:var(--text);font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
+.gene-row.test span{color:var(--moss)}
+.gene-row.test input{accent-color:var(--moss)}
+.seg.small button{min-height:32px;font-size:12px;padding:0 6px}
+.gene-row .seg{grid-column:2 / 4}
+.menu-list button div{line-height:1.25}
+@media (min-width:700px){
+  #mGenesPanel{max-height:none}
+  .tool-row.main.m6 .tool{width:calc(33.3% - 4px)}
+}
+@media (max-width:699px){
+  .mode-btn span{display:none}
+  .tool-row.main.m6 .tool{flex:1 1 0;min-width:0}
 }
 </style>
 </head>
@@ -241,7 +273,7 @@ h1,h2,h3{margin:0;font-weight:700;letter-spacing:-.01em}
 </section>
 
 <!-- ÉDITEUR -->
-<section id="editorView" class="view">
+<section id="editorView" class="view edview">
   <div class="ed-top">
     <button class="icon ghost" id="btnEdBack" aria-label="Retour à la bibliothèque">←</button>
     <input id="edName" maxlength="48" aria-label="Nom de l’asset">
@@ -288,19 +320,73 @@ h1,h2,h3{margin:0;font-weight:700;letter-spacing:-.01em}
   </aside>
 </section>
 
+<!-- ÉDITEUR DE MODÈLE VOXEL 3D -->
+<section id="modelView" class="view edview">
+  <div class="ed-top">
+    <button class="icon ghost" id="mBack" aria-label="Retour à la bibliothèque">←</button>
+    <input id="mName" maxlength="48" aria-label="Nom du modèle">
+    <span class="save-state" id="mSave"></span>
+    <button class="mode-btn" id="mMutant">🧬<span> Mutations</span></button>
+    <button class="icon" id="mUndo" aria-label="Annuler">↶</button>
+    <button class="icon" id="mRedo" aria-label="Rétablir">↷</button>
+    <button class="icon" id="mMenu" aria-label="Plus d’options">⋯</button>
+  </div>
+  <div class="ed-surfaces" id="partBar"></div>
+  <div class="ed-stage" id="mStage">
+    <canvas id="mCanvas" style="position:absolute;inset:0;width:100%;height:100%;touch-action:none;display:block"></canvas>
+    <div class="stage-hud"><span class="hud-chip" id="mHud"></span></div>
+    <div class="stage-zoom" id="mZoomBox">
+      <button class="icon" id="mZoomIn" aria-label="Zoomer">+</button>
+      <button class="icon" id="mZoomOut" aria-label="Dézoomer">−</button>
+      <button class="icon" id="mFit" aria-label="Recentrer">⤢</button>
+    </div>
+  </div>
+  <aside class="ed-tools">
+    <div id="mSculptPanel">
+      <div class="tool-label">Outils</div>
+      <div class="tool-row main m6" id="mToolRow"></div>
+      <div class="tool-label">Options</div>
+      <div class="tool-row" id="mOptRow"></div>
+      <div class="tool-label">Couleur</div>
+      <div class="tool-row">
+        <button class="color-now" id="mBtnColor" aria-label="Choisir la couleur"><i id="mColorNow"></i></button>
+        <div class="palette" id="mModelColors" style="flex:1"></div>
+      </div>
+      <div class="tool-label">Palette Sonder</div>
+      <div class="palette" id="mPalette"></div>
+    </div>
+    <div id="mGenesPanel" class="hidden">
+      <div class="genes-actions">
+        <button id="mAddGene" class="primary">+ Mutation</button>
+        <button id="mRandom">🎲 Individu</button>
+        <button id="mPop">▦ Population</button>
+        <button id="mBase">↺ Base</button>
+      </div>
+      <p class="muted genes-intro" id="mGenesIntro"></p>
+      <div id="mGenesList"></div>
+    </div>
+  </aside>
+  <aside class="ed-preview" id="mPreview">
+    <div class="pv-head"><span>Aperçu en jeu</span><span id="mPvLabel"></span></div>
+    <canvas id="mPreviewCanvas" width="360" height="360"></canvas>
+    <div class="pv-modes" id="mPvModes"></div>
+    <div class="pv-note" id="mPvNote"></div>
+  </aside>
+</section>
+
 </div>
 <div class="modal hidden" id="modal"><div class="sheet" id="sheet"></div></div>
 <div class="toast hidden" id="toast"></div>
 <script>(() => {
 'use strict';
-const VERSION = '1.0';
+const VERSION = '2.0';
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const CATS = {
   terrain: {label:'Terrain', glyph:'▦', color:'#6f5238', desc:'Blocs voxel : sols, roche, eau', kind:'block'},
-  objects: {label:'Objets',  glyph:'⬡', color:'#54616b', desc:'Objets posables et éléments', kind:'sprite'},
-  fauna:   {label:'Faune',   glyph:'◆', color:'#9a7653', desc:'Animaux et créatures', kind:'sprite'},
-  flora:   {label:'Flore',   glyph:'♣', color:'#477a54', desc:'Arbres, buissons, plantes', kind:'sprite'},
-  agents:  {label:'Agents',  glyph:'◉', color:'#376c8e', desc:'Sonders et autres agents', kind:'sprite'}
+  objects: {label:'Objets',  glyph:'⬡', color:'#54616b', desc:'Objets posables et éléments', kind:'model', rig:'static'},
+  fauna:   {label:'Faune',   glyph:'◆', color:'#9a7653', desc:'Espèces animales', kind:'model', rig:'quad'},
+  flora:   {label:'Flore',   glyph:'♣', color:'#477a54', desc:'Arbres, buissons, plantes', kind:'model', rig:'plant'},
+  agents:  {label:'Agents',  glyph:'◉', color:'#376c8e', desc:'Une espèce par agent : Sonder…', kind:'model', rig:'biped'}
 };
 const FACES = [{key:'top',label:'Dessus'},{key:'side',label:'Côtés'},{key:'bottom',label:'Dessous'}];
 const SIZES = [16,32,64];
@@ -373,8 +459,11 @@ function normalizeAsset(a){
   const cat = CATS[a.category] ? a.category : 'objects';
   const n = { id:a.id||uid(), name:a.name||'Sans nom', category:cat, size:a.size||32, tags:a.tags||[], variantOf:a.variantOf||null,
     createdAt:a.createdAt||a.updatedAt||new Date().toISOString(), updatedAt:a.updatedAt||new Date().toISOString(), thumb:a.thumb||null };
-  if(CATS[cat].kind==='block'){ n.faces = { top:a.faces?.top||null, side:a.faces?.side||null, bottom:a.faces?.bottom||null }; }
-  else { n.frames = a.frames?.length ? a.frames : [a.faces?.sprite||null]; n.fps = a.fps||6; }
+  n.type = a.type || (CATS[cat].kind==='block' ? 'block' : (a.frames||a.faces?.sprite) ? 'sprite' : 'model');
+  if(n.type==='block'){ n.faces = { top:a.faces?.top||null, side:a.faces?.side||null, bottom:a.faces?.bottom||null }; }
+  else if(n.type==='sprite'){ n.frames = a.frames?.length ? a.frames : [a.faces?.sprite||null]; n.fps = a.fps||6; }
+  else { n.vpu=a.vpu||10; n.rig=a.rig||CATS[cat].rig||'static'; n.palette=a.palette||[]; n.parts=a.parts||[]; n.genes=a.genes||[]; delete n.size; }
+  if(a.builtin) n.builtin=a.builtin;
   return n;
 }
 
@@ -401,7 +490,8 @@ function drawGround(ctx, blocks, n, W, H){
 
 /* ================= Vignettes ================= */
 async function makeThumbFromAsset(a){
-  if(CATS[a.category].kind==='block'){
+  if(a.type==='model') return modelThumb(a);
+  if(a.type==='block'){
     const top=await canvasFrom(a.faces.top,a.size), side=await canvasFrom(a.faces.side||a.faces.top,a.size);
     return thumbBlock(top, side);
   }
@@ -413,14 +503,15 @@ function thumbSprite(s){ const c=makeCanvas(128), x=c.getContext('2d'); x.imageS
 /* ================= Navigation (bouton retour Android) ================= */
 let route = {view:'home'};
 function go(r, push=true){
-  if(route.view==='editor' && r.view!=='editor') leaveEditor();
+  if(route.view==='editor') leaveEditor();
   route = r;
   if(push) history.pushState(r,'');
   $$('.view').forEach(v=>v.classList.remove('active'));
-  $('#'+r.view+'View').classList.add('active');
+  const isModel = r.view==='editor' && assets.find(x=>x.id===r.id)?.type==='model';
+  $('#'+(isModel?'model':r.view)+'View').classList.add('active');
   if(r.view==='home') renderHome();
   if(r.view==='library') renderLibrary();
-  if(r.view==='editor') openEditor(r.id);
+  if(r.view==='editor') isModel ? openModelEditor(r.id) : openEditor(r.id);
 }
 window.addEventListener('popstate', e => { if(!$('#modal').classList.contains('hidden')){ closeModal(null); history.pushState(route,''); return; } go(e.state||{view:'home'}, false); });
 
@@ -486,7 +577,7 @@ async function drawHero(){
 let libTag=null;
 function renderLibrary(){
   const cat=CATS[route.cat]; $('#libTitle').textContent=cat.label;
-  const q=slug($('#searchInput').value||''); const list=assets.filter(a=>a.category===route.cat);
+  const qs=($('#searchInput').value||'').trim(), q=qs?slug(qs):''; const list=assets.filter(a=>a.category===route.cat);
   const tags=[...new Set(list.flatMap(a=>a.tags||[]))].sort();
   if(libTag && !tags.includes(libTag)) libTag=null;
   $('#tagChips').innerHTML = tags.length ? ['<button class="chip '+(libTag?'':'on')+'" data-tag="">Tous</button>', ...tags.map(t=>`<button class="chip ${t===libTag?'on':''}" data-tag="${esc(t)}">${esc(t)}</button>`)].join('') : '';
@@ -496,8 +587,8 @@ function renderLibrary(){
   const grid=$('#assetGrid'); grid.innerHTML='';
   shown.forEach(a=>{
     const el=document.createElement('div'); el.className='asset'; el.setAttribute('role','button'); el.tabIndex=0;
-    const kindInfo = cat.kind==='block' ? `${a.size}×${a.size}` : `${a.size}×${a.size} · ${a.frames.length} frame${a.frames.length>1?'s':''}`;
-    el.innerHTML=`<div class="thumb"><img alt="" src="${a.thumb||''}"></div><div class="meta"><b>${esc(a.name)}<small>${kindInfo}${a.variantOf?' · variante':''}</small></b><button class="more" aria-label="Options">⋯</button></div>`;
+    const kindInfo = a.type==='block' ? `${a.size}×${a.size}` : a.type==='sprite' ? `Sprite ${a.size}×${a.size} · ${a.frames.length} frame${a.frames.length>1?'s':''}` : `${a.parts.length} pièce${a.parts.length>1?'s':''} · 🧬 ${a.genes.length}`;
+    el.innerHTML=`<div class="thumb"><img alt="" src="${a.thumb||''}"></div><div class="meta"><b>${esc(a.name)}<small>${kindInfo}${a.variantOf?' · variante':''}${a.builtin?' · origine Sonder':''}</small></b><button class="more" aria-label="Options">⋯</button></div>`;
     el.onclick=e=>{ if(e.target.closest('.more')) assetMenu(a); else go({view:'editor', id:a.id}); };
     grid.appendChild(el);
   });
@@ -512,6 +603,7 @@ $('#btnNewAsset').onclick=()=>newAssetDialog();
 $('#btnExportCat').onclick=()=>exportAssets(assets.filter(a=>a.category===route.cat), CATS[route.cat].label);
 
 async function newAssetDialog(){
+  if(CATS[route.cat].kind==='model') return newModelDialog();
   const cat=CATS[route.cat]; let size=32, name='', tags='';
   const v=await sheet(`<h3>Nouvel asset · ${cat.label}</h3>
     <label>Nom<input id="nName" placeholder="${cat.kind==='block'?'ex. Terre humide':'ex. Cerf qui marche'}"></label>
@@ -524,6 +616,26 @@ async function newAssetDialog(){
   name=name.trim(); if(!name){ toast('Donne un nom à l’asset'); return newAssetDialog(); }
   const a=normalizeAsset({name, category:route.cat, size, tags:parseTags(tags)});
   a.thumb=null; assets.push(a); await DB.put(a);
+  go({view:'editor', id:a.id});
+}
+async function newModelDialog(){
+  const cat=CATS[route.cat], bases=assets.filter(a=>a.category===route.cat&&a.type==='model'); let name='', tags='', from='', vpu=10;
+  const v=await sheet(`<h3>${route.cat==='agents'||route.cat==='fauna'?'Nouvelle espèce':'Nouveau modèle'} · ${cat.label}</h3>
+    ${route.cat==='agents'?'<p>Chaque agent est une espèce : tu sculptes l’individu de base, puis tu définis ses mutations.</p>':''}
+    <label>Nom<input id="nName" placeholder="${route.cat==='agents'?'ex. Sonder des marais':route.cat==='fauna'?'ex. Cerf des plaines':'ex. Chêne noueux'}"></label>
+    <label>Point de départ<select id="nFrom"><option value="">Vide (je pars de zéro)</option>${bases.map(b=>`<option value="${b.id}">Copie de « ${esc(b.name)} »</option>`).join('')}</select></label>
+    <label id="nVpuWrap">Finesse<div class="seg" id="nVpu">${[8,10,16].map(s=>`<button data-s="${s}" class="${s===10?'on':''}">1 bloc = ${s} voxels</button>`).join('')}</div></label>
+    <label>Tags (séparés par des virgules)<input id="nTags" placeholder="ex. forêt, nocturne"></label>
+    <div class="acts"><button data-v="no">Annuler</button><button data-v="ok" class="primary">Créer et sculpter</button></div>`,
+    s=>{ s.querySelector('#nName').oninput=e=>name=e.target.value; s.querySelector('#nTags').oninput=e=>tags=e.target.value;
+      s.querySelector('#nFrom').onchange=e=>{ from=e.target.value; s.querySelector('#nVpuWrap').classList.toggle('hidden',!!from); };
+      s.querySelectorAll('#nVpu button').forEach(b=>b.onclick=()=>{ vpu=+b.dataset.s; s.querySelectorAll('#nVpu button').forEach(x=>x.classList.toggle('on',x===b)); }); });
+  if(v!=='ok') return;
+  name=name.trim(); if(!name){ toast('Donne un nom'); return newModelDialog(); }
+  let a;
+  if(from){ const src=assets.find(x=>x.id===from); a=normalizeAsset({...JSON.parse(JSON.stringify(src)), id:uid(), name, tags:parseTags(tags)||src.tags, variantOf:src.id, createdAt:new Date().toISOString(), updatedAt:new Date().toISOString()}); delete a.builtin; }
+  else a=normalizeAsset({name, category:route.cat, type:'model', vpu, tags:parseTags(tags)});
+  a.thumb=a.parts.length?modelThumb(a):null; assets.push(a); await DB.put(a);
   go({view:'editor', id:a.id});
 }
 const parseTags = s => [...new Set((s||'').split(',').map(t=>t.trim().toLowerCase()).filter(Boolean))];
@@ -546,7 +658,7 @@ async function assetMenu(a){
 }
 async function duplicateAsset(a, variant){
   const n=JSON.parse(JSON.stringify(a)); n.id=uid(); n.name=a.name+(variant?' – variante':' (copie)');
-  n.variantOf = variant ? (a.variantOf||a.id) : a.variantOf; n.createdAt=n.updatedAt=new Date().toISOString();
+  delete n.builtin; n.variantOf = variant ? (a.variantOf||a.id) : a.variantOf; n.createdAt=n.updatedAt=new Date().toISOString();
   assets.push(n); await DB.put(n); return n;
 }
 
@@ -558,7 +670,7 @@ let pvMode={block:'cube', sprite:'anim'}, pvBg='damier';
 
 async function openEditor(id){
   const a=assets.find(x=>x.id===id); if(!a){ go({view:'home'},false); return; }
-  const kind=CATS[a.category].kind;
+  const kind=a.type==='block'?'block':'sprite';
   const surfaces=[];
   if(kind==='block') for(const f of FACES) surfaces.push({key:f.key, label:f.label, cv:await canvasFrom(a.faces[f.key], a.size)});
   else for(let i=0;i<a.frames.length;i++) surfaces.push({key:'f'+i, label:'Frame '+(i+1), cv:await canvasFrom(a.frames[i], a.size)});
@@ -568,7 +680,7 @@ async function openEditor(id){
   requestAnimationFrame(()=>{ fitView(); draw(); });
   updateUndo(); schedulePreview();
 }
-function leaveEditor(){ if(ed){ flushSave(); ed=null; } }
+function leaveEditor(){ if(ed){ flushSave(); ed=null; } leaveModelEditor(); }
 $('#btnEdBack').onclick=()=>history.back();
 $('#edName').onchange=e=>{ const n=e.target.value.trim(); if(!n||!ed) return; ed.asset.name=n; markDirty(); };
 
@@ -648,7 +760,7 @@ function renderTools(){
 function setTool(t){ if(t==='picker'&&tool!=='picker') prevTool=tool; tool=t; renderTools(); }
 
 /* ----- Couleurs ----- */
-function updateColorUI(){ $('#colorNow').style.background=rgba(color); $('#alphaInput').value=color[3]; $('#alphaVal').textContent=Math.round(color[3]/2.55)+'%'; $$('#palette .sw[data-c]').forEach(b=>b.classList.toggle('on', b.dataset.c===toHex(color))); }
+function updateColorUI(){ if(typeof mUpdateColor==='function') mUpdateColor(); $('#colorNow').style.background=rgba(color); $('#alphaInput').value=color[3]; $('#alphaVal').textContent=Math.round(color[3]/2.55)+'%'; $$('#palette .sw[data-c]').forEach(b=>b.classList.toggle('on', b.dataset.c===toHex(color))); }
 function setColor(c, keepAlpha=false){ color=[c[0],c[1],c[2], keepAlpha?color[3]:(c[3]??255)]; updateColorUI(); }
 $('#btnColor').onclick=()=>{ const i=$('#colorInput'); i.value=toHex(color); i.click(); };
 $('#colorInput').oninput=e=>setColor(fromHex(e.target.value), true);
@@ -953,8 +1065,19 @@ async function exportAssets(list, label){
   for(const a of list){
     const cat=CATS[a.category]; let sl=slug(a.name); while(used.has(a.category+'/'+sl)) sl+='_'+a.id.slice(-4); used.add(a.category+'/'+sl);
     const base=`${a.category}/${sl}`;
-    const meta={id:a.id, name:a.name, slug:sl, category:a.category, type:cat.kind, size:a.size, tags:a.tags||[], variantOf:a.variantOf||null, updatedAt:a.updatedAt};
-    if(cat.kind==='block'){
+    const meta={id:a.id, name:a.name, slug:sl, category:a.category, type:a.type, size:a.size, tags:a.tags||[], variantOf:a.variantOf||null, updatedAt:a.updatedAt};
+    if(a.type==='model'){
+      a.parts.forEach(p=>{ if(RT.has(p)) syncVox(p); });
+      const model={format:'sonder-model', formatVersion:1, id:a.id, name:a.name, category:a.category, rig:a.rig, voxelsPerBlock:a.vpu,
+        axes:{x:'avant', y:'gauche', z:'haut'}, unit:'1 unité = 1 bloc de terrain (= 1 unité monde du renderer)',
+        palette:a.palette, parts:a.parts.map(p=>({id:p.id, name:p.name, role:p.role, parent:p.parent, pivot:p.pivot, voxels:p.vox})),
+        genes:a.genes.map(g=>({id:g.id, name:g.name, type:g.type, targets:g.targets, min:g.min, max:g.max, base:g.base}))};
+      meta.rig=a.rig; meta.model=`${base}/model.json`; meta.preview=`${base}/preview.png`; delete meta.size;
+      files.push({name:meta.model, data:te.encode(JSON.stringify(model))});
+      const pv=makeCanvas(256), px=pv.getContext('2d'); renderModelFit(px,a,{x:0,y:0,w:256,h:256},{heading:0});
+      files.push({name:meta.preview, data:await canvasBytes(pv)});
+      if(a.builtin) meta.builtin=a.builtin;
+    } else if(a.type==='block'){
       meta.faces={}; const top=a.faces.top, side=a.faces.side||top, bottom=a.faces.bottom||side;
       for(const [k,u] of Object.entries({top,side,bottom})){ if(!u) continue; const f=`${base}/${k}.png`; meta.faces[k]=f; files.push({name:f, data:dataUrlBytes(u)}); }
     } else {
@@ -968,7 +1091,7 @@ async function exportAssets(list, label){
   }
   files.unshift({name:'studio.json', data:te.encode(JSON.stringify({palette:settings.palette},null,2))});
   files.unshift({name:'manifest.json', data:te.encode(JSON.stringify(manifest,null,2))});
-  files.unshift({name:'LISEZ-MOI.txt', data:te.encode(`Export Sonder Asset Studio ${VERSION}\n\nmanifest.json fait foi : il liste chaque asset et ses fichiers.\n- Blocs (terrain) : top.png, side.png, bottom.png\n- Sprites : frame_000.png… + sheet.png (planche horizontale) et fps\nLes PNG conservent la transparence.\n\nCe fichier sert aussi de sauvegarde : Accueil > Restaurer une sauvegarde.\n`)});
+  files.unshift({name:'LISEZ-MOI.txt', data:te.encode(`Export Sonder Asset Studio ${VERSION}\n\nmanifest.json fait foi : il liste chaque asset et ses fichiers.\n- Blocs (terrain) : top.png, side.png, bottom.png\n- Modèles voxel (agents, faune, flore, objets) : model.json (pièces, pivots, rôles d’animation, palette, mutations) + preview.png\n- Sprites : frame_000.png… + sheet.png (planche horizontale) et fps\nLes PNG conservent la transparence.\n\nCe fichier sert aussi de sauvegarde : Accueil > Restaurer une sauvegarde.\n`)});
   const blob=zipStore(files), date=new Date().toISOString().slice(0,10);
   const name=`Sonder_${slug(label)}_${date}.zip`;
   if(list.length===assets.length){ settings.lastExport=new Date().toISOString(); saveSettings(); }
@@ -997,7 +1120,8 @@ $('#zipInput').onchange=async e=>{
     let n=0;
     for(const m of man.assets){
       const a={id:m.id, name:m.name, category:m.category, size:m.size, tags:m.tags, variantOf:m.variantOf, updatedAt:m.updatedAt, fps:m.fps};
-      if(CATS[m.category]?.kind==='block') a.faces={top:await url(m.faces?.top), side:await url(m.faces?.side), bottom:await url(m.faces?.bottom)};
+      if(m.type==='model'&&m.model&&z[m.model]){ const mo=JSON.parse(td.decode(z[m.model])); Object.assign(a,{type:'model', rig:mo.rig, vpu:mo.voxelsPerBlock, palette:mo.palette, genes:mo.genes, parts:mo.parts.map(p=>({id:p.id,name:p.name,role:p.role,parent:p.parent,pivot:p.pivot,vox:p.voxels})), builtin:m.builtin}); }
+      else if(m.type==='block'||(!m.type&&CATS[m.category]?.kind==='block')) a.faces={top:await url(m.faces?.top), side:await url(m.faces?.side), bottom:await url(m.faces?.bottom)};
       else if(m.frames) a.frames=await Promise.all(m.frames.map(url));
       else a.faces={sprite:await url(m.faces?.sprite)}; // format V0.1
       const na=normalizeAsset(a); if(mode==='copy' && assets.some(x=>x.id===na.id)){ na.id=uid(); na.name+=' (restauré)'; }
@@ -1020,6 +1144,7 @@ $('#btnSettings').onclick=async()=>{
     <div class="menu-list">
       <button data-v="persist"><span>🔒</span>${persisted?'Stockage protégé ✓':'Protéger mes assets contre le nettoyage auto'}</button>
       <button data-v="pal"><span>◑</span>Réinitialiser la palette Sonder</button>
+      <button data-v="seed"><span>↺</span>Réinstaller les modèles d’origine de Sonder</button>
     </div>
     <p style="font-size:12px">Version ${VERSION} · Tes assets sont stockés uniquement sur ce téléphone. Exporte régulièrement pour avoir une sauvegarde.</p>
     <div class="acts"><button data-v="close" class="primary">Fermer</button></div>`,
@@ -1027,19 +1152,658 @@ $('#btnSettings').onclick=async()=>{
          s.querySelector('#sGrid').onchange=e=>{ settings.grid=e.target.checked; saveSettings(); };
          s.querySelector('#sOnion').onchange=e=>{ settings.onion=e.target.checked; saveSettings(); }; });
   if(v==='persist'){ try{ const ok=await navigator.storage.persist(); toast(ok?'Stockage protégé':'Android a refusé : installe l’app sur l’écran d’accueil puis réessaie', 3500); }catch{ toast('Non disponible sur ce navigateur'); } }
+  if(v==='seed'){ const r=await sheet(`<h3>Modèles d’origine</h3><p>Ils sont extraits du moteur Sonder V0.7.5.4 : Sonder, 4 espèces animales, 7 plantes et arbres, 3 objets, 18 matériaux de terrain.</p><div class="menu-list"><button data-v="miss"><span>＋</span>Réinstaller ceux qui manquent</button><button data-v="all" class="danger"><span>↺</span>Tout remettre à l’origine (écrase tes retouches)</button></div>`);
+    if(r){ toast('Installation…',6000); const n=await seedBuiltins(r==='all'); toast(n+' modèle(s) installé(s)'); renderHome(); } }
   if(v==='pal' && await confirmBox('Réinitialiser la palette ?', 'Les couleurs ajoutées seront retirées.', 'Réinitialiser', true)){ settings.palette=[...DEFAULT_PALETTE]; saveSettings(); }
 };
+
+/* ================================================================
+   MODÈLES VOXEL 3D : moteur de rendu, modèles de base, éditeur, mutations
+   Axes du modèle : x = avant, y = gauche, z = haut. 1 unité = 1 bloc de terrain.
+   ================================================================ */
+const RIGS = {
+  biped:  {label:'Bipède', poses:[['idle','Debout'],['walk','Marche'],['rest','Repos'],['consume','Consommer'],['death','Mort']],
+           roles:{torso:'Torse',head:'Tête',snout:'Visage / museau',arm_l:'Bras gauche',arm_r:'Bras droit',leg_l:'Jambe gauche',leg_r:'Jambe droite',horn:'Cornes',carapace:'Carapace',core:'Noyau',tail:'Queue',other:'Autre (suit son parent)'}},
+  quad:   {label:'Quadrupède', poses:[['idle','Debout'],['walk','Marche'],['consume','Brouter'],['rest','Couché'],['death','Mort']],
+           roles:{torso:'Tronc',head:'Tête',snout:'Museau',leg_fl:'Patte avant gauche',leg_fr:'Patte avant droite',leg_bl:'Patte arrière gauche',leg_br:'Patte arrière droite',tail:'Queue',horn:'Cornes',other:'Autre (suit son parent)'}},
+  plant:  {label:'Plante', poses:[['idle','Immobile'],['wind','Vent']], roles:{trunk:'Tronc',branch:'Branche',crown:'Feuillage',other:'Autre'}},
+  static: {label:'Objet', poses:[['idle','Immobile']], roles:{body:'Corps',other:'Autre'}}
+};
+const MIRROR_ROLE = {leg_l:'leg_r',leg_r:'leg_l',arm_l:'arm_r',arm_r:'arm_l',leg_fl:'leg_fr',leg_fr:'leg_fl',leg_bl:'leg_br',leg_br:'leg_bl'};
+const PARENT_ROLE = {head:'torso',snout:'head',arm_l:'torso',arm_r:'torso',horn:'head',carapace:'torso',core:'torso',tail:'torso',branch:'trunk',crown:'trunk'};
+const GENE_TYPES = {
+  stature:{label:'Taille (hauteur)', desc:'Étire tout le corps en hauteur.', global:true, lo:.4, hi:2, step:.01, base:1, min:.86, max:1.14},
+  frame:  {label:'Carrure (largeur)', desc:'Élargit ou affine tout le corps.', global:true, lo:.4, hi:2, step:.01, base:1, min:.8, max:1.2},
+  size:   {label:'Gabarit (tout)', desc:'Agrandit ou réduit l’individu entier.', global:true, lo:.3, hi:2.5, step:.01, base:1, min:.8, max:1.2},
+  scale:  {label:'Volume de pièces', desc:'Agrandit les pièces choisies (et ce qui y est attaché).', lo:.3, hi:2.5, step:.01, base:1, min:.85, max:1.15},
+  length: {label:'Longueur de pièces', desc:'Allonge les pièces choisies depuis leur pivot.', lo:.3, hi:2.5, step:.01, base:1, min:.85, max:1.15},
+  grow:   {label:'Croissance', desc:'De 0 (absent) à pleinement développé, comme des cornes.', lo:0, hi:2, step:.01, base:1, min:0, max:1},
+  hue:    {label:'Teinte', desc:'Fait tourner la couleur des pièces choisies.', lo:-180, hi:180, step:1, base:0, min:-40, max:40},
+  light:  {label:'Luminosité', desc:'Éclaircit ou assombrit les pièces choisies.', lo:.4, hi:1.6, step:.01, base:1, min:.85, max:1.15},
+  show:   {label:'Présence', desc:'La pièce apparaît chez certains individus seulement.', lo:0, hi:1, step:1, base:1, min:0, max:1}
+};
+const KEY=(x,y,z)=>((x+512)*1024+(y+512))*1024+(z+512);
+const DEC=k=>[Math.floor(k/1048576)-512, Math.floor(k/1024)%1024-512, k%1024-512];
+const DIRS=[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];
+const FC=[[[1,0,0],[1,1,0],[1,1,1],[1,0,1]],[[0,0,0],[0,0,1],[0,1,1],[0,1,0]],[[0,1,0],[0,1,1],[1,1,1],[1,1,0]],[[0,0,0],[1,0,0],[1,0,1],[0,0,1]],[[0,0,1],[1,0,1],[1,1,1],[0,1,1]],[[0,0,0],[0,1,0],[1,1,0],[1,0,0]]];
+
+/* ----- Matrices affines 3×4 ----- */
+const mI=()=>[1,0,0,0,0,1,0,0,0,0,1,0];
+function mMul(A,B){ const r=new Array(12); for(let i=0;i<3;i++){ const a0=A[i*4],a1=A[i*4+1],a2=A[i*4+2]; r[i*4]=a0*B[0]+a1*B[4]+a2*B[8]; r[i*4+1]=a0*B[1]+a1*B[5]+a2*B[9]; r[i*4+2]=a0*B[2]+a1*B[6]+a2*B[10]; r[i*4+3]=a0*B[3]+a1*B[7]+a2*B[11]+A[i*4+3]; } return r; }
+const mT=(x,y,z)=>[1,0,0,x,0,1,0,y,0,0,1,z];
+const mS=(x,y,z)=>[x,0,0,0,0,y,0,0,0,0,z,0];
+const mRx=a=>{const c=Math.cos(a),s=Math.sin(a);return [1,0,0,0,0,c,-s,0,0,s,c,0]};
+const mRy=a=>{const c=Math.cos(a),s=Math.sin(a);return [c,0,s,0,0,1,0,0,-s,0,c,0]};
+const mRz=a=>{const c=Math.cos(a),s=Math.sin(a);return [c,-s,0,0,s,c,0,0,0,0,1,0]};
+const about=(p,M)=>mMul(mMul(mT(p[0],p[1],p[2]),M),mT(-p[0],-p[1],-p[2]));
+const mAp=(M,x,y,z)=>[M[0]*x+M[1]*y+M[2]*z+M[3],M[4]*x+M[5]*y+M[6]*z+M[7],M[8]*x+M[9]*y+M[10]*z+M[11]];
+
+/* ----- Données d'exécution des pièces (hors sauvegarde) ----- */
+const RT=new WeakMap();
+function rt(p){ let r=RT.get(p); if(!r){ r={map:new Map(),v:0,fv:-1,faces:null,bounds:null}; const v=p.vox||[]; for(let i=0;i+3<v.length;i+=4) r.map.set(KEY(v[i],v[i+1],v[i+2]),v[i+3]); RT.set(p,r); } return r; }
+function syncVox(p){ const r=rt(p), out=[]; for(const [k,ci] of r.map){ const d=DEC(k); out.push(d[0],d[1],d[2],ci); } p.vox=out; }
+function partFaces(p){ const r=rt(p); if(r.fv===r.v&&r.faces) return r; const f=[]; let b=[1e9,1e9,1e9,-1e9,-1e9,-1e9];
+  for(const [k,ci] of r.map){ const [x,y,z]=DEC(k); if(x<b[0])b[0]=x; if(y<b[1])b[1]=y; if(z<b[2])b[2]=z; if(x+1>b[3])b[3]=x+1; if(y+1>b[4])b[4]=y+1; if(z+1>b[5])b[5]=z+1;
+    for(let d=0;d<6;d++){ const D=DIRS[d]; if(!r.map.has(KEY(x+D[0],y+D[1],z+D[2]))) f.push(x,y,z,d,ci); } }
+  r.faces=f; r.bounds=r.map.size?b:null; r.fv=r.v; return r; }
+const bump=p=>{ rt(p).v++; };
+
+/* ----- Couleurs ----- */
+function hexRgb(h){ const n=parseInt(h.slice(1,7),16); return [(n>>16)&255,(n>>8)&255,n&255]; }
+function rgbHex(c){ return '#'+c.map(v=>clamp(Math.round(v),0,255).toString(16).padStart(2,'0')).join(''); }
+function shadeHex(h,f){ return rgbHex(hexRgb(h).map(v=>v*f)); }
+function hueShift([r,g,b],deg){ if(!deg) return [r,g,b]; r/=255;g/=255;b/=255; const mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2; let h=0,s=0;
+  if(mx!==mn){ const d=mx-mn; s=l>.5?d/(2-mx-mn):d/(mx+mn); h=mx===r?(g-b)/d+(g<b?6:0):mx===g?(b-r)/d+2:(r-g)/d+4; h/=6; }
+  h=((h+deg/360)%1+1)%1; const q=l<.5?l*(1+s):l+s-l*s, p=2*l-q, f=t=>{ t=(t%1+1)%1; return t<1/6?p+(q-p)*6*t:t<.5?q:t<2/3?p+(q-p)*(2/3-t)*6:p; };
+  return s? [f(h+1/3)*255,f(h)*255,f(h-1/3)*255] : [l*255,l*255,l*255]; }
+const colCache=new Map();
+function partRGB(hex,hue,light){ const k=hex+'|'+hue+'|'+light; let c=colCache.get(k); if(!c){ c=hueShift(hexRgb(hex),hue).map(v=>v*light); colCache.set(k,c); if(colCache.size>4000) colCache.clear(); } return c; }
+
+/* ----- Poses (mêmes gestes que le moteur Sonder) ----- */
+const ease=x=>x*x*(3-2*x);
+function posesFor(a,pose,t){
+  const P={}, set=(role,M)=>a.parts.forEach(p=>{ if(p.role===role) P[p.id]=M; }); let root=null; const ph=t*2*Math.PI;
+  if(a.rig==='biped'){
+    if(pose==='walk'){ const s=Math.sin(ph*1.1); set('leg_l',mRy(.5*s)); set('leg_r',mRy(-.5*s)); set('arm_l',mRy(-.42*s)); set('arm_r',mRy(.42*s)); }
+    else if(pose==='rest'){ set('leg_l',mMul(mRz(-.3),mRy(-1.45))); set('leg_r',mMul(mRz(.3),mRy(-1.45))); set('arm_l',mRy(-.95)); set('arm_r',mRy(-.95)); set('torso',mRy(.03*Math.sin(ph*.35))); }
+    else if(pose==='consume'){ const hand=.5-.5*Math.cos(ph*.7); set('torso',mRy(.42)); set('arm_r',mRy(-(.45+1.2*hand))); set('arm_l',mRy(-.35)); set('leg_l',mRy(-1.15)); set('head',mRy(.12)); }
+    else if(pose==='death'){ const p=ease(clamp((t%4)/1.6,0,1)); root=mRy(1.52*p); set('arm_l',mRy(-.7*p)); set('arm_r',mRy(-.5*p)); set('leg_r',mRy(.2*p)); }
+    else set('torso',mRy(.018*Math.sin(ph*.4)));
+  } else if(a.rig==='quad'){
+    if(pose==='walk'){ const s=Math.sin(ph*1.3); set('leg_fl',mRy(.55*s)); set('leg_br',mRy(.55*s)); set('leg_fr',mRy(-.55*s)); set('leg_bl',mRy(-.55*s)); set('tail',mRz(.3*Math.sin(ph*2.6))); set('head',mRy(.06*Math.sin(ph*2.6))); }
+    else if(pose==='consume'){ set('head',mRy(.95+.08*Math.sin(ph*1.6))); set('tail',mRz(.2*Math.sin(ph))); }
+    else if(pose==='rest'){ set('leg_fl',mRy(-1.45)); set('leg_fr',mRy(-1.45)); set('leg_bl',mRy(1.45)); set('leg_br',mRy(1.45)); set('head',mRy(.25+.04*Math.sin(ph*.3))); }
+    else if(pose==='death'){ const p=ease(clamp((t%4)/1.4,0,1)); root=mRx(1.5*p); ['leg_fl','leg_fr','leg_bl','leg_br'].forEach((r,i)=>set(r,mRy((i<2?-.5:.5)*p))); set('head',mRy(.4*p)); }
+    else set('tail',mRz(.12*Math.sin(ph*.5)));
+  } else if(a.rig==='plant' && pose==='wind'){ const s=Math.sin(ph*.8); set('crown',mRx(.06*s)); set('branch',mRx(.05*s)); set('trunk',mRx(.018*s)); }
+  return {root,parts:P};
+}
+
+/* ----- Assemblage : génétique + pose + orientation ----- */
+function geneValue(G,vals){ const v=vals&&vals[G.id]; return v===undefined?G.base:v; }
+function buildWorld(a,o){
+  const parts=a.parts, byId=new Map(parts.map(p=>[p.id,p])), eff={};
+  parts.forEach(p=>eff[p.id]={s:[1,1,1],grow:1,hue:0,light:1,show:true});
+  let gs=[1,1,1];
+  if(!o.editor) for(const G of a.genes||[]){ const v=geneValue(G,o.genes), ty=G.type;
+    if(ty==='stature') gs[2]*=v; else if(ty==='frame') gs[1]*=v; else if(ty==='size'){ gs=gs.map(x=>x*v); }
+    else for(const id of (G.targets&&G.targets.length?G.targets:parts.map(p=>p.id))){ const e=eff[id]; if(!e) continue;
+      if(ty==='scale') e.s=e.s.map(x=>x*v); else if(ty==='length') e.s[2]*=v; else if(ty==='grow') e.grow*=v; else if(ty==='hue') e.hue+=v; else if(ty==='light') e.light*=v; else if(ty==='show'&&v<.5) e.show=false; } }
+  const pose=o.editor?null:posesFor(a,o.pose||'idle',o.t||0);
+  const root=mMul(pose&&pose.root?pose.root:mI(), mS(gs[0],gs[1],gs[2]));
+  const W={}, visiting=new Set();
+  const world=p=>{ if(W[p.id]) return W[p.id]; visiting.add(p.id);
+    const par=p.parent&&byId.get(p.parent); const base=par&&!visiting.has(par.id)?world(par):root;
+    const e=eff[p.id], g=e.grow; let L=mS(e.s[0]*g,e.s[1]*g,e.s[2]*g); const pr=pose&&pose.parts[p.id]; if(pr) L=mMul(pr,L);
+    W[p.id]=mMul(base,about(p.pivot||[0,0,0],L)); visiting.delete(p.id); return W[p.id]; };
+  parts.forEach(world);
+  const u=1/a.vpu, H=mMul(mT(o.offset?o.offset[0]:0,o.offset?o.offset[1]:0,0), mMul(mRz((o.heading||0)*Math.PI/8), mS(u,u,u)));
+  const res={}; let minZ=Infinity;
+  for(const p of parts){ const e=eff[p.id], hidden=!e.show||e.grow<.08||p.hidden; const M=mMul(H,W[p.id]);
+    // Une pièce masquée masque aussi ce qui y est attaché.
+    let q=p, gone=hidden; while(!gone&&q.parent&&byId.get(q.parent)&&q.parent!==q.id){ const pe=eff[q.parent]; q=byId.get(q.parent); if(!pe.show||pe.grow<.08) gone=true; if(q===p) break; }
+    res[p.id]={M,hue:e.hue,light:e.light,vis:!gone};
+    if(!gone&&o.ground){ const b=partFaces(p).bounds; if(b) for(const cx of [b[0],b[3]]) for(const cy of [b[1],b[4]]) for(const cz of [b[2],b[5]]){ const z=mAp(M,cx,cy,cz)[2]; if(z<minZ) minZ=z; } }
+  }
+  if(o.ground&&isFinite(minZ)) for(const id in res) res[id].M[11]-=minZ;
+  return res;
+}
+
+/* ----- Rendu (même projection que render/iso.go) ----- */
+function camProj(cam){ const cs=Math.cos(cam.az), sn=Math.sin(cam.az), el=cam.el, A=.5*el, B=4/6; return {cs,sn,el,A,B,V:[B*sn,B*cs,A]}; }
+function projRaw(pc,x,y,z){ const rx=x*pc.cs-y*pc.sn, ry=x*pc.sn+y*pc.cs; return [rx*6, ry*3*pc.el-z*4, pc.B*ry+pc.A*z]; }
+function collectFaces(a,o,pc,out){
+  const W=buildWorld(a,o), L=[-.55,.83];
+  for(const p of a.parts){ const w=W[p.id]; if(!w.vis) continue; const r=partFaces(p), f=r.faces, M=w.M; if(!f.length) continue;
+    const ex=[M[0],M[4],M[8]], ey=[M[1],M[5],M[9]], ez=[M[2],M[6],M[10]];
+    const dim=o.focus&&o.focus!==p.id?o.dimAlpha:1;
+    for(let i=0;i<f.length;i+=5){ const x=f[i],y=f[i+1],z=f[i+2],d=f[i+3],ci=f[i+4];
+      if(o.cut!=null&&z>=o.cut) continue;
+      const corners=FC[d], P=[];
+      for(let c=0;c<4;c++){ const k=corners[c]; P.push(mAp(M,x+k[0],y+k[1],z+k[2])); }
+      const e1=[P[1][0]-P[0][0],P[1][1]-P[0][1],P[1][2]-P[0][2]], e2=[P[2][0]-P[1][0],P[2][1]-P[1][1],P[2][2]-P[1][2]];
+      const n=[e1[1]*e2[2]-e1[2]*e2[1], e1[2]*e2[0]-e1[0]*e2[2], e1[0]*e2[1]-e1[1]*e2[0]];
+      if(n[0]*pc.V[0]+n[1]*pc.V[1]+n[2]*pc.V[2]<=0) continue;
+      const nl=Math.hypot(n[0],n[1],n[2])||1, nz=n[2]/nl;
+      const sh = nz>.7?1.12 : nz<-.7?.52 : .6+.24*Math.max(0,(n[0]*L[0]+n[1]*L[1])/nl);
+      const pts=new Array(8); let dep=0;
+      for(let c=0;c<4;c++){ const q=projRaw(pc,P[c][0],P[c][1],P[c][2]); pts[c*2]=q[0]; pts[c*2+1]=q[1]; dep+=q[2]; }
+      const col=partRGB(a.palette[ci]||'#ff00ff',w.hue,w.light);
+      out.push({pts,dep:dep/4+(nz>.7?.001:0),r:col[0]*sh,g:col[1]*sh,b:col[2]*sh,al:dim*(o.alpha||1),pid:p.id,x,y,z,d});
+    }
+  }
+}
+function faceBounds(faces){ let b=[1e9,1e9,-1e9,-1e9]; for(const f of faces) for(let i=0;i<8;i+=2){ const x=f.pts[i],y=f.pts[i+1]; if(x<b[0])b[0]=x; if(y<b[1])b[1]=y; if(x>b[2])b[2]=x; if(y>b[3])b[3]=y; } return b; }
+function drawFaces(ctx,faces,zoom,ox,oy,grid){
+  faces.sort((p,q)=>p.dep-q.dep);
+  ctx.lineJoin='round';
+  for(const f of faces){ const s=f.pts; f.sp=[]; for(let i=0;i<8;i+=2) f.sp.push(ox+s[i]*zoom, oy+s[i+1]*zoom);
+    const c=`rgba(${f.r|0},${f.g|0},${f.b|0},${f.al})`; ctx.fillStyle=c; ctx.strokeStyle=grid?'rgba(0,0,0,.2)':c; ctx.lineWidth=grid?1:.7;
+    ctx.beginPath(); ctx.moveTo(f.sp[0],f.sp[1]); ctx.lineTo(f.sp[2],f.sp[3]); ctx.lineTo(f.sp[4],f.sp[5]); ctx.lineTo(f.sp[6],f.sp[7]); ctx.closePath(); ctx.fill(); if(f.al>=1||grid) ctx.stroke(); }
+}
+// Rendu autonome d'un modèle cadré dans un rectangle (vignettes, aperçu, population).
+function renderModelFit(ctx,a,box,o={}){
+  const cam=o.cam||{az:Math.PI/4,el:.72}, pc=camProj(cam), faces=[];
+  collectFaces(a,{ground:true,...o},pc,faces); if(!faces.length) return null;
+  let b=o.bounds||faceBounds(faces); const bw=b[2]-b[0]||1, bh=b[3]-b[1]||1;
+  const zoom=Math.min(box.w*(o.pad||.84)/bw, box.h*(o.pad||.84)/bh);
+  const ox=box.x+box.w/2-(b[0]+bw/2)*zoom, oy=box.y+box.h/2-(b[1]+bh/2)*zoom;
+  drawFaces(ctx,faces,zoom,ox,oy,false); return b;
+}
+function modelThumb(a){ const c=makeCanvas(128), x=c.getContext('2d'); renderModelFit(x,a,{x:0,y:0,w:128,h:128},{heading:0,pose:'idle',pad:.86}); return c.toDataURL('image/png'); }
+
+/* ================= Modèles de base extraits de Sonder V0.7.5.4 ================= */
+function MB(vpu){ this.vpu=vpu; this.palette=[]; this.parts=[]; }
+MB.prototype.col=function(hex){ let i=this.palette.indexOf(hex); if(i<0){ i=this.palette.length; this.palette.push(hex); } return i; };
+MB.prototype.part=function(id,name,role,parent,pivot){ const p={id,name,role,parent:parent||null,pivot:pivot.map(v=>v*this.vpu),vox:[]}; p._m=new Map(); this.parts.push(p); return p; };
+MB.prototype.set=function(p,x,y,z,hex){ p._m.set(KEY(x,y,z),this.col(hex)); };
+// Prisme orienté du moteur : centre (cx,cy), hauteur z0→z1, longueur selon (ux,uy), largeur perpendiculaire.
+MB.prototype.box=function(p,cx,cy,z0,z1,len,wid,hex,ux=1,uy=0){
+  const v=this.vpu, vx=-uy, vy=ux, hl=Math.max(len/2,.5/v), hw=Math.max(wid/2,.5/v), ext=hl*Math.abs(ux)+hw*Math.abs(vx)+.1, eyt=hl*Math.abs(uy)+hw*Math.abs(vy)+.1;
+  let zA=Math.round(z0*v), zB=Math.round(z1*v); if(zB<=zA) zB=zA+1;
+  for(let i=Math.floor((cx-ext)*v);i<=Math.ceil((cx+ext)*v);i++) for(let j=Math.floor((cy-eyt)*v);j<=Math.ceil((cy+eyt)*v);j++){
+    const dx=(i+.5)/v-cx, dy=(j+.5)/v-cy; if(Math.abs(dx*ux+dy*uy)>hl+1e-9||Math.abs(dx*vx+dy*vy)>hw+1e-9) continue;
+    for(let k=zA;k<zB;k++) this.set(p,i,j,k,hex); }
+};
+MB.prototype.line=function(p,a,b,hex){ const v=this.vpu, n=Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1],b[2]-a[2])*v*2)+1;
+  for(let s=0;s<=n;s++){ const t=s/n; this.set(p,Math.floor((a[0]+(b[0]-a[0])*t)*v),Math.floor((a[1]+(b[1]-a[1])*t)*v),Math.floor((a[2]+(b[2]-a[2])*t)*v),hex); } };
+MB.prototype.done=function(extra){ this.parts.forEach(p=>{ const out=[]; for(const [k,ci] of p._m){ const d=DEC(k); out.push(d[0],d[1],d[2],ci); } p.vox=out; delete p._m; });
+  return {type:'model', vpu:this.vpu, palette:this.palette, parts:this.parts, ...extra}; };
+const rgbH=(r,g,b)=>rgbHex([r,g,b]);
+
+function buildSonder(){
+  const m=new MB(10), body=rgbH(82,148,142), core=rgbH(122,101,145), sh=f=>shadeHex(body,f);
+  const torso=m.part('torso','Torse','torso',null,[0,0,1.18]); m.box(torso,0,0,1.18,2.48,.76,.92,body);
+  for(const [id,nm,side] of [['leg_l','Jambe gauche',1],['leg_r','Jambe droite',-1]]){ const p=m.part(id,nm,id,null,[0,.22*side,1.18]); m.box(p,0,.22*side,0,1.18,.34,.28,sh(.58)); }
+  for(const [id,nm,side] of [['arm_l','Bras gauche',1],['arm_r','Bras droit',-1]]){ const p=m.part(id,nm,id,'torso',[0,.62*side,2.3]); m.box(p,0,.62*side,1.05,2.38,.32,.30,sh(.76)); }
+  const head=m.part('head','Tête','head','torso',[.08,0,2.48]); m.box(head,.08,0,2.48,3.13,.72,.78,sh(1.10));
+  const face=m.part('snout','Visage','snout','head',[.08,0,2.48]); m.box(face,.38,0,2.57,2.91,.36,.48,sh(.82));
+  const cr=m.part('core','Noyau','core','torso',[.40,0,1.93]); m.box(cr,.40,0,1.84,2.02,.19,.18,core);
+  // Cornes : même trajectoire que drawSonderHornGrowth (croissance max, courbure 0,4, écart 0,28).
+  const horn=m.part('horns','Cornes','horn','head',[.08,0,3.06]); const hc=sh(.32), spread=.28, curve=.4, seg=6;
+  for(const side of [-1,1]){ let prev=[.08,side*spread,3.06]; for(let k=0;k<seg;k++){ const t=(k+1)/seg, back=curve*.22*t*t, out=(.05+.10*t);
+    const nx=[.08-back, side*(spread+out), 3.06+(.10+.50*t)]; m.line(horn,prev,nx,hc); prev=nx; } }
+  const dors=m.part('carapace','Carapace dorsale','carapace','torso',[-.38,0,2.0]); const ar=sh(.48);
+  for(const [z0,z1] of [[2.26,2.46],[1.96,2.16],[1.66,1.86]]) m.box(dors,-.43,0,z0,z1,.1,.76,ar);
+  m.box(dors,-.14,0,2.48,2.56,.5,.84,ar);
+  const vent=m.part('plastron','Plastron','carapace','torso',[.38,0,1.9]); m.box(vent,.43,0,1.5,1.78,.08,.62,shadeHex(ar,.92)); m.box(vent,.43,0,2.08,2.3,.08,.62,shadeHex(ar,.92));
+  const all=['torso','leg_l','leg_r','arm_l','arm_r','head','snout','horns','carapace','plastron'];
+  return m.done({rig:'biped', genes:[
+    {id:'g_stat',name:'Stature',type:'stature',targets:[],min:.86,max:1.14,base:1},
+    {id:'g_frame',name:'Carrure',type:'frame',targets:[],min:.72,max:1.28,base:1},
+    {id:'g_head',name:'Tête',type:'scale',targets:['head'],min:.86,max:1.14,base:1},
+    {id:'g_limb',name:'Membres',type:'scale',targets:['arm_l','arm_r'],min:.88,max:1.12,base:1},
+    {id:'g_horn',name:'Pousse des cornes',type:'grow',targets:['horns'],min:0,max:1,base:1},
+    {id:'g_pig',name:'Pigment',type:'hue',targets:all,min:-150,max:150,base:0},
+    {id:'g_core',name:'Couleur du noyau',type:'hue',targets:['core'],min:-180,max:180,base:0},
+    {id:'g_dors',name:'Carapace dorsale',type:'show',targets:['carapace'],min:0,max:1,base:1},
+    {id:'g_vent',name:'Plastron',type:'show',targets:['plastron'],min:0,max:1,base:0}]});
+}
+function buildAnimal(kind){
+  const D={small:{L:.703,W:.336,H:.441,c:[176,151,103]},medium:{L:1.2,W:.559,H:.98,c:[154,126,83]},large:{L:1.85,W:.84,H:1.43,c:[123,91,64]},predator:{L:1.395,W:.52,H:.777,c:[132,82,66],pred:true}}[kind];
+  const m=new MB(10), {L,W,H}=D, body=rgbH(...D.c), sh=f=>shadeHex(body,f);
+  const legH=Math.max(.2,H*.42), legL=Math.max(.09,L*.11), legW=Math.max(.07,W*.2);
+  const torso=m.part('torso','Tronc','torso',null,[0,0,legH]); m.box(torso,0,0,legH,H,L*.78,W,body);
+  for(const [id,nm,px,py] of [['leg_fl','Patte avant gauche',.31,.32],['leg_fr','Patte avant droite',.31,-.32],['leg_bl','Patte arrière gauche',-.31,.32],['leg_br','Patte arrière droite',-.31,-.32]]){
+    const p=m.part(id,nm,id,null,[L*px,W*py,legH]); m.box(p,L*px,W*py,0,legH+.04,legL,legW,sh(.58)); }
+  const hz=H-H*.12, hx=L*.49, hl=D.pred?L*.33:L*.28, hw=D.pred?W*.58:W*.66;
+  const head=m.part('head','Tête','head','torso',[hx-hl/2,0,hz]); m.box(head,hx,0,hz-hw*.30,hz+hw*.42,hl,hw,sh(1.08));
+  for(const side of [-1,1]) m.box(head,hx,hw*.32*side,hz+hw*.42,hz+hw*.42+.1,.1,.1,sh(1.16));
+  const sn=m.part('snout','Museau','snout','head',[hx-hl/2,0,hz]); m.box(sn,hx+hl*.62,0,hz-hw*.18,hz+hw*.18,hl*.34,hw*.46,sh(.78));
+  const tail=m.part('tail','Queue','tail','torso',[-L*.41,0,H-H*.24]); m.line(tail,[-L*.41,0,H-H*.24],[-L*.62,0,H-H*.38],sh(.55));
+  const all=['torso','leg_fl','leg_fr','leg_bl','leg_br','head','snout','tail'];
+  return m.done({rig:'quad', genes:[
+    {id:'g_size',name:'Gabarit',type:'size',targets:[],min:.75,max:1.25,base:1},
+    {id:'g_ins',name:'Isolation (pelage clair)',type:'light',targets:all,min:.86,max:1.18,base:1},
+    {id:'g_dry',name:'Économie d’eau (ocre)',type:'hue',targets:all,min:-12,max:12,base:0},
+    {id:'g_leg',name:'Foulée',type:'length',targets:['leg_fl','leg_fr','leg_bl','leg_br'],min:.85,max:1.2,base:1}]});
+}
+function buildTree(sp){
+  const m=new MB(10), h=3+Math.sqrt(3)*1.25, cw=.35+Math.sqrt(3)*.68;
+  let trunk=rgbH(73,61,45), leaf=rgbH(70,102,59);
+  if(sp===2) leaf=rgbH(62,94,73); else if(sp===3) leaf=rgbH(55,78,61); else if(sp===4){ trunk=rgbH(92,72,48); leaf=rgbH(94,105,55); }
+  const tw=Math.min(.52,.15+h*.016), top=sp===3?h*.88:h*.76;
+  const t=m.part('trunk','Tronc','trunk',null,[0,0,0]); m.box(t,0,0,0,top,tw,tw,trunk);
+  if(sp!==3){ const bz=h*.58, b=m.part('branch','Branche','branch','trunk',[0,0,bz]); m.box(b,Math.min(1.8,cw*.62)/2,0,bz,bz+Math.max(.1,tw*.48),Math.min(1.8,cw*.62),Math.max(.1,tw*.42),shadeHex(trunk,.9)); }
+  const c=m.part('crown','Feuillage','crown','trunk',[0,0,h*.55]);
+  if(sp===3){ const bottom=h*.3, span=h*.7; for(let tier=0;tier<4;tier++){ const q=tier/4, w=cw*(1-q*.58), z0=bottom+span*q*.82; m.box(c,0,0,z0,Math.min(h,z0+span*.34),w,w,shadeHex(leaf,.78+tier*.075)); } }
+  else { const ch=Math.max(1,h*.46), bottom=h-ch; m.box(c,0,0,bottom+ch*.12,h,cw*.72,cw*.72,leaf);
+    [0,1,2,1].forEach((k,j)=>{ const ang=j*Math.PI/2, off=cw*.25, z0=bottom+ch*(.08+k*.055), s=cw*(.43+(j%2)*.05); m.box(c,Math.cos(ang)*off,Math.sin(ang)*off,z0,z0+ch*.58,s,s,shadeHex(leaf,.82+(j%3)*.09)); });
+    m.box(c,0,0,h-ch*.2,h+ch*.08,cw*.42,cw*.42,shadeHex(leaf,1.1)); }
+  const genes=[{id:'g_h',name:'Hauteur',type:'stature',targets:[],min:.6,max:1.6,base:1},{id:'g_c',name:'Couronne',type:'scale',targets:['crown'],min:.7,max:1.4,base:1},{id:'g_v',name:'Vigueur du feuillage',type:'light',targets:['crown'],min:.72,max:1.1,base:1}];
+  return m.done({rig:'plant', genes});
+}
+function buildPlant(sp){
+  const m=new MB(10), key=0x5A3C96F1; const genes=[{id:'g_h',name:'Hauteur',type:'stature',targets:[],min:.7,max:1.4,base:1},{id:'g_v',name:'Vigueur',type:'light',targets:[],min:.8,max:1.12,base:1}];
+  if(sp===2){ const s=m.part('crown','Tiges','crown',null,[0,0,0]), stem=rgbH(77,112,68), tip=rgbH(139,119,67);
+    for(let j=0;j<4;j++){ const hh=.56+12*.027+((key>>(j*7))&3)*.05, ox=(((key>>(j*9+3))&7)-3.5)*.055, oy=(((key>>(j*9+6))&7)-3.5)*.055;
+      m.box(s,ox,oy,0,hh,.13,.13,shadeHex(stem,.88+(j%3)*.07)); if(j%2===(key&1)) m.box(s,ox,oy,hh,hh+.14,.17,.17,tip); } }
+  else if(sp===3){ const hh=.38+12*.022, t=m.part('trunk','Bois','trunk',null,[0,0,0]); m.box(t,0,0,0,hh*.78,.15,.15,rgbH(91,72,49));
+    const c=m.part('crown','Feuilles','crown','trunk',[0,0,hh*.4]); for(let j=0;j<3;j++){ const ang=((key>>(8*j))&15)*Math.PI/8+j*2.1, off=.14+(j%2)*.07, z0=hh*(.42+j*.1), s=.34+((key>>(24+j*3))&3)*.035; m.box(c,Math.cos(ang)*off,Math.sin(ang)*off,z0,z0+.3,s,s,shadeHex(rgbH(104,101,67),.88+j*.08)); } }
+  else { const s=m.part('crown','Touffe','crown',null,[0,0,0]), col=rgbH(67,98,57);
+    for(let j=0;j<3;j++){ const hh=.18+12*.012+((key>>(j*6))&3)*.025, ox=(((key>>(j*8+4))&7)-3.5)*.045, oy=(((key>>(j*8+7))&7)-3.5)*.045, ang=((key>>(j*5))&7)*Math.PI/4;
+      m.box(s,ox,oy,0,hh,.16,.12,shadeHex(col,.86+j*.1),Math.cos(ang),Math.sin(ang)); } }
+  return m.done({rig:'plant', genes});
+}
+function buildObject(kind){
+  const m=new MB(10);
+  if(kind==='cube'){ const p=m.part('body','Bloc','body',null,[0,0,0]); m.box(p,0,0,0,1,1,1,rgbH(104,99,96)); }
+  else if(kind==='rod'){ const p=m.part('body','Bâton','body',null,[0,0,0]); m.box(p,0,0,0,.1,.95,.1,rgbH(91,72,49)); }
+  else { const p=m.part('body','Galet','body',null,[0,0,0]); m.box(p,0,0,0,.12,.24,.18,rgbH(137,134,126)); m.box(p,0,0,.12,.18,.14,.1,rgbH(137,134,126)); }
+  return m.done({rig:'static', genes:[]});
+}
+const TERRAIN_MATS=[['topsoil','Terre végétale',[91,78,54]],['subsoil','Sous-sol',[111,83,55]],['clay','Argile',[132,88,65]],['sediment','Sédiment',[128,112,82]],['rock','Roche',[92,96,101]],['bedrock','Socle rocheux',[62,66,72]],['sand','Sable',[175,148,99]],['gravel','Gravier',[124,119,108]],['silt','Limon',[116,103,75]],['organic','Sol organique',[71,65,47]],['peat','Tourbe',[60,54,43]],['mud','Boue',[83,72,59]],['snow','Neige',[205,211,211]],['ice','Glace',[171,198,205]],['limestone','Calcaire',[176,169,143]],['shale','Schiste',[76,72,82]],['granite','Granite',[142,111,103]],['basalt','Basalte',[43,49,56]]];
+function terrainFace(rgb,seed,top){ const c=makeCanvas(16), x=c.getContext('2d'); let s=seed>>>0;
+  const rnd=()=>{ s^=s<<13; s>>>=0; s^=s>>17; s^=s<<5; s>>>=0; return s/4294967296; };
+  for(let j=0;j<16;j++) for(let i=0;i<16;i++){ const n=.88+rnd()*.2+(rnd()<.06?-.12:0)+(top?.03:0); x.fillStyle=rgbHex(rgb.map(v=>v*n)); x.fillRect(i,j,1,1); }
+  return c.toDataURL('image/png'); }
+function builtinCatalog(){
+  const L=[];
+  L.push({key:'sonder',category:'agents',name:'Sonder',tags:['espèce','base'],build:buildSonder});
+  L.push({key:'fauna_small',category:'fauna',name:'Petit opportuniste',tags:['herbivore','base'],build:()=>buildAnimal('small')});
+  L.push({key:'fauna_medium',category:'fauna',name:'Moyen grégaire',tags:['herbivore','base'],build:()=>buildAnimal('medium')});
+  L.push({key:'fauna_large',category:'fauna',name:'Grand territorial',tags:['herbivore','base'],build:()=>buildAnimal('large')});
+  L.push({key:'fauna_pred',category:'fauna',name:'Prédateur',tags:['prédateur','base'],build:()=>buildAnimal('predator')});
+  [['Feuillu',1],['Ripisylve',2],['Conifère',3],['Arbre xérophyte',4]].forEach(([n,s])=>L.push({key:'tree_'+s,category:'flora',name:n,tags:['arbre','base'],build:()=>buildTree(s)}));
+  [['Pionnière',1],['Hélophyte',2],['Arbuste xérophyte',3]].forEach(([n,s])=>L.push({key:'plant_'+s,category:'flora',name:n,tags:['plante','base'],build:()=>buildPlant(s)}));
+  [['Bloc libre','cube'],['Bâton','rod'],['Galet','pebble']].forEach(([n,k])=>L.push({key:'obj_'+k,category:'objects',name:n,tags:['objet','base'],build:()=>buildObject(k)}));
+  TERRAIN_MATS.forEach(([k,n,c],i)=>L.push({key:'mat_'+k,category:'terrain',name:n,tags:['matériau','base'],build:()=>({type:'block',size:16,faces:{top:terrainFace(c,1000+i*77,true),side:terrainFace(c,5000+i*91,false),bottom:terrainFace(c,9000+i*13,false)}})}));
+  return L;
+}
+async function makeBuiltin(entry){
+  const now=new Date().toISOString(), data=entry.build();
+  const a=normalizeAsset({id:'builtin_'+entry.key, name:entry.name, category:entry.category, tags:entry.tags, createdAt:now, updatedAt:now, ...data});
+  a.builtin={key:entry.key, source:'Sonder V0.7.5.4'}; a.thumb=await makeThumbFromAsset(a); return a;
+}
+async function seedBuiltins(force){
+  const cat=builtinCatalog(); let n=0;
+  for(const e of cat){ const id='builtin_'+e.key, ex=assets.find(a=>a.id===id);
+    if(ex&&!force) continue; const a=await makeBuiltin(e); assets=assets.filter(x=>x.id!==id); assets.push(a); await DB.put(a); n++; }
+  return n;
+}
+
+/* ================= Éditeur de modèle ================= */
+let md=null, mTool='add', mBrush=1, mMirror=true, mRef='sonder', mIsolate=false, mCut=null, mMode='sculpt';
+let mPose='idle', mHeading=0, mSpin=false, mPopulation=null;
+const mStage=$('#mStage'), mCanvas=$('#mCanvas');
+
+function mSetSave(s){ const el=$('#mSave'); el.className='save-state '+(s==='ok'?'ok':''); el.innerHTML= s==='ok'?'✓<span> Enregistré</span>': s==='saving'?'…<span> Enregistrement</span>':'●<span> Modifié</span>'; }
+let mSaveTimer=null;
+function mDirty(){ if(!md) return; md.dirty=true; mSetSave('dirty'); clearTimeout(mSaveTimer); mSaveTimer=setTimeout(mFlush,1200); }
+async function mFlush(){ clearTimeout(mSaveTimer); if(!md||!md.dirty) return; const e=md, a=e.asset; e.dirty=false; mSetSave('saving');
+  a.parts.forEach(syncVox); a.thumb=modelThumb(a); a.updatedAt=new Date().toISOString();
+  try{ await DB.put(a); if(md===e&&!e.dirty) mSetSave('ok'); }catch{ toast('Échec de l’enregistrement : stockage plein ?'); e.dirty=true; } }
+document.addEventListener('visibilitychange',()=>{ if(document.hidden) mFlush(); });
+
+function openModelEditor(id){
+  const a=assets.find(x=>x.id===id); if(!a) return go({view:'home'},false);
+  if(!a.parts.length){ a.parts.push({id:'p_'+uid().slice(-6),name:RIGS[a.rig].roles[Object.keys(RIGS[a.rig].roles)[0]],role:Object.keys(RIGS[a.rig].roles)[0],parent:null,pivot:[0,0,0],vox:[]}); }
+  md={asset:a, active:a.parts[0].id, hist:[], redo:[], dirty:false, cam:{az:Math.PI/4,el:.72,zoom:1,ox:0,oy:0}, test:{}, t0:performance.now()};
+  (a.genes||[]).forEach(g=>md.test[g.id]=g.base);
+  mMode='sculpt'; mPopulation=null; mCut=null; mTool='add';
+  $('#mName').value=a.name; mSetSave('ok');
+  renderPartBar(); renderMTools(); renderMPalette(); renderMPreviewCtl(); renderGenes(); applyMode();
+  requestAnimationFrame(()=>{ mFit(); mDraw(); });
+  mUpdateUndo();
+}
+function leaveModelEditor(){ if(md){ mFlush(); md=null; } }
+$('#mBack').onclick=()=>history.back();
+$('#mName').onchange=e=>{ const n=e.target.value.trim(); if(n&&md){ md.asset.name=n; mDirty(); } };
+const activePart=()=>md.asset.parts.find(p=>p.id===md.active)||md.asset.parts[0];
+
+/* ----- Barre des pièces ----- */
+function renderPartBar(){
+  const bar=$('#partBar'); bar.innerHTML=''; const a=md.asset, roles=RIGS[a.rig].roles;
+  a.parts.forEach(p=>{ const b=document.createElement('button'); b.className='surf'+(p.id===md.active?' on':'');
+    b.innerHTML=`<span class="lbl">${esc(p.name)}${p.hidden?' ◌':''}</span><small class="muted">${rt(p).map.size}</small>`; b.title=roles[p.role]||p.role;
+    let lp=null; b.onpointerdown=()=>{ lp=setTimeout(()=>{ lp='x'; buzz(12); partMenu(p); },520); }; b.onpointerup=b.onpointerleave=()=>{ if(lp!=='x') clearTimeout(lp); };
+    b.onclick=()=>{ if(lp==='x'){ lp=null; return; } if(md.active===p.id){ partMenu(p); return; } md.active=p.id; renderPartBar(); mDraw(); };
+    bar.appendChild(b); });
+  const c=document.createElement('div'); c.className='frame-ctrl';
+  c.innerHTML=`<button class="icon" id="pAdd" aria-label="Ajouter une pièce">+</button><button class="opt ${mIsolate?'on':''}" id="pIso">Isoler</button>`;
+  bar.appendChild(c); $('#pAdd').onclick=addPartDialog; $('#pIso').onclick=()=>{ mIsolate=!mIsolate; renderPartBar(); mDraw(); };
+}
+function roleOptions(rig,sel){ return Object.entries(RIGS[rig].roles).map(([k,l])=>`<option value="${k}" ${k===sel?'selected':''}>${l}</option>`).join(''); }
+function defaultParent(a,role){ const pr=PARENT_ROLE[role]; if(!pr) return null; const q=a.parts.find(p=>p.role===pr); return q?q.id:null; }
+async function addPartDialog(){
+  const a=md.asset; let name='', role=Object.keys(RIGS[a.rig].roles).find(r=>!a.parts.some(p=>p.role===r))||'other', mirror=true;
+  const v=await sheet(`<h3>Nouvelle pièce</h3><label>Nom<input id="npName" placeholder="ex. Bras gauche"></label>
+    <label>Rôle dans l’animation<select id="npRole">${roleOptions(a.rig,role)}</select></label>
+    <label class="switch" id="npMirWrap">Créer aussi la pièce opposée (gauche/droite)<input type="checkbox" id="npMir" checked></label>
+    <p style="font-size:13px">Le rôle décide comment la pièce bouge : une jambe balance pendant la marche, une tête s’abaisse pour brouter…</p>
+    <div class="acts"><button data-v="no">Annuler</button><button data-v="ok" class="primary">Créer</button></div>`,
+    s=>{ const upd=()=>{ s.querySelector('#npMirWrap').classList.toggle('hidden',!MIRROR_ROLE[role]); };
+      s.querySelector('#npName').oninput=e=>name=e.target.value; s.querySelector('#npRole').onchange=e=>{ role=e.target.value; upd(); }; s.querySelector('#npMir').onchange=e=>mirror=e.target.checked; upd(); });
+  if(v!=='ok') return; const roles=RIGS[a.rig].roles;
+  const mk=(r,n)=>{ const p={id:'p_'+uid().slice(-6),name:n||roles[r]||'Pièce',role:r,parent:defaultParent(a,r),pivot:activePivotGuess(r),vox:[]}; a.parts.push(p); return p; };
+  const p=mk(role,name.trim()); if(mirror&&MIRROR_ROLE[role]&&!a.parts.some(q=>q.role===MIRROR_ROLE[role])) mk(MIRROR_ROLE[role]);
+  md.active=p.id; mDirty(); renderPartBar(); renderGenes(); mDraw(); toast('Pièce créée : pose ses voxels, puis place son pivot (◎)');
+}
+function activePivotGuess(role){ const b=partFaces(activePart()).bounds; return b?[(b[0]+b[3])/2,(b[1]+b[4])/2,b[5]]:[0,0,0]; }
+async function partMenu(p){
+  const a=md.asset, others=a.parts.filter(q=>q.id!==p.id);
+  const v=await sheet(`<h3>${esc(p.name)}</h3><div class="menu-list">
+    <button data-v="ren"><span>Aa</span>Renommer</button>
+    <button data-v="role"><span>⚙</span>Rôle : ${esc(RIGS[a.rig].roles[p.role]||p.role)}</button>
+    <button data-v="par"><span>⛓</span>Attachée à : ${esc(a.parts.find(q=>q.id===p.parent)?.name||'rien (sol)')}</button>
+    <button data-v="piv"><span>◎</span>Placer le pivot (articulation)</button>
+    ${MIRROR_ROLE[p.role]?'<button data-v="mir"><span>⇆</span>Copier en miroir vers la pièce opposée</button>':''}
+    <button data-v="hide"><span>◌</span>${p.hidden?'Afficher':'Masquer'} dans l’éditeur</button>
+    <button data-v="clr"><span>⌫</span>Vider la pièce</button>
+    <button data-v="del" class="danger" ${others.length?'':'disabled'}><span>✕</span>Supprimer la pièce</button></div>`);
+  if(v==='ren'){ const n=await askText('Renommer la pièce',p.name,'Renommer'); if(n){ p.name=n; mDirty(); renderPartBar(); renderGenes(); } }
+  if(v==='role'){ const r=await sheet(`<h3>Rôle de « ${esc(p.name)} »</h3><div class="menu-list">${Object.entries(RIGS[a.rig].roles).map(([k,l])=>`<button data-v="${k}">${k===p.role?'✓ ':''}${l}</button>`).join('')}</div>`); if(r){ p.role=r; mDirty(); renderPartBar(); } }
+  if(v==='par'){ const r=await sheet(`<h3>Attacher « ${esc(p.name)} » à</h3><p>Quand le parent bouge ou mute, cette pièce suit.</p><div class="menu-list"><button data-v="__none">Rien (posée au sol)</button>${others.map(q=>`<button data-v="${q.id}">${q.id===p.parent?'✓ ':''}${esc(q.name)}</button>`).join('')}</div>`);
+    if(r){ let q=r==='__none'?null:r, x=q, loop=false; while(x){ if(x===p.id){ loop=true; break; } x=a.parts.find(z=>z.id===x)?.parent; }
+      if(loop) toast('Impossible : cela créerait une boucle'); else { p.parent=q; mDirty(); } } }
+  if(v==='piv'){ md.active=p.id; mTool='pivot'; renderMTools(); renderPartBar(); mDraw(); toast('Touche un voxel pour placer l’articulation'); }
+  if(v==='mir') mirrorPartTo(p);
+  if(v==='hide'){ p.hidden=!p.hidden; mDirty(); renderPartBar(); mDraw(); }
+  if(v==='clr'&&await confirmBox('Vider la pièce ?','Tous ses voxels seront retirés (annulable).','Vider',true)){ mSnapshot([p]); rt(p).map.clear(); bump(p); mCommit(); }
+  if(v==='del'&&await confirmBox('Supprimer la pièce ?',`« ${p.name} » et ses voxels seront supprimés.`,'Supprimer',true)){
+    a.parts=a.parts.filter(q=>q.id!==p.id); a.parts.forEach(q=>{ if(q.parent===p.id) q.parent=p.parent; }); (a.genes||[]).forEach(g=>g.targets=(g.targets||[]).filter(t=>t!==p.id));
+    md.active=a.parts[0].id; md.hist=[]; md.redo=[]; mUpdateUndo(); mDirty(); renderPartBar(); renderGenes(); mDraw(); }
+}
+function partnerOf(p){ const r=MIRROR_ROLE[p.role]; return r?md.asset.parts.find(q=>q.role===r):null; }
+function mirrorPartTo(p){ const q=partnerOf(p); if(!q) return toast('Aucune pièce opposée : crée-la d’abord');
+  mSnapshot([q]); const src=rt(p).map, dst=rt(q).map; dst.clear(); for(const [k,ci] of src){ const [x,y,z]=DEC(k); dst.set(KEY(x,-1-y,z),ci); }
+  q.pivot=[p.pivot[0],-p.pivot[1],p.pivot[2]]; bump(q); mCommit(); toast(`Copié vers « ${q.name} »`); }
+
+/* ----- Outils ----- */
+const M_TOOLS=[{id:'add',icon:'＋',label:'Ajouter'},{id:'remove',icon:'－',label:'Retirer'},{id:'paint',icon:'✎',label:'Peindre'},{id:'pick',icon:'⌾',label:'Pipette'},{id:'orbit',icon:'⟳',label:'Tourner'},{id:'pivot',icon:'◎',label:'Pivot'}];
+function renderMTools(){
+  const row=$('#mToolRow'); row.innerHTML='';
+  M_TOOLS.forEach(t=>{ const b=document.createElement('button'); b.className='tool'+(t.id===mTool?' on':''); b.innerHTML=`${t.icon}<small>${t.label}</small>`; b.setAttribute('aria-label',t.label); b.onclick=()=>{ mTool=t.id; renderMTools(); mDraw(); }; row.appendChild(b); });
+  const o=$('#mOptRow'); o.innerHTML='';
+  const opt=(l,on,fn)=>{ const b=document.createElement('button'); b.className='opt'+(on?' on':''); b.textContent=l; b.onclick=fn; o.appendChild(b); };
+  [1,2,3].forEach(s=>opt(s===1?'1 voxel':s+'×'+s, mBrush===s, ()=>{ mBrush=s; renderMTools(); }));
+  opt('⇆ Miroir G/D', mMirror, ()=>{ mMirror=!mMirror; renderMTools(); mDraw(); });
+  opt(mCut==null?'✂ Coupe':'✂ Coupe : '+mCut, mCut!=null, ()=>{ mCut=mCut==null?Math.max(1,Math.round(modelHeightVox()/2)):null; renderMTools(); mDraw(); });
+  if(mCut!=null){ opt('▲',false,()=>{ mCut++; renderMTools(); mDraw(); }); opt('▼',false,()=>{ mCut=Math.max(1,mCut-1); renderMTools(); mDraw(); }); }
+  opt('Réf : '+({sonder:'Sonder',block:'Bloc',none:'aucune'}[mRef]), mRef!=='none', ()=>{ mRef={sonder:'block',block:'none',none:'sonder'}[mRef]; renderMTools(); mFit(); mDraw(); });
+  mUpdateColor();
+}
+function renderMPalette(){
+  const p=$('#mPalette'); p.innerHTML='';
+  settings.palette.forEach(c=>{ const b=document.createElement('button'); b.className='sw'; b.style.background=c; b.dataset.c=c; b.onclick=()=>setColor(fromHex(c)); p.appendChild(b); });
+  const m=$('#mModelColors'); m.innerHTML='';
+  if(md) md.asset.palette.forEach(c=>{ const b=document.createElement('button'); b.className='sw'; b.style.background=c; b.dataset.c=c; b.onclick=()=>setColor(fromHex(c)); m.appendChild(b); });
+  mUpdateColor();
+}
+function mUpdateColor(){ const n=$('#mColorNow'); if(n) n.style.background=toHex(color); $$('#mPalette .sw,#mModelColors .sw').forEach(b=>b.classList.toggle('on',b.dataset.c===toHex(color))); }
+$('#mBtnColor').onclick=()=>{ const i=$('#colorInput'); i.value=toHex(color); i.click(); };
+function colorIndex(){ const a=md.asset, h=toHex(color); let i=a.palette.indexOf(h); if(i<0){ i=a.palette.length; a.palette.push(h); renderMPalette(); } return i; }
+
+/* ----- Historique ----- */
+function mSnapshot(parts){ md.pending=parts.map(p=>({p, map:new Map(rt(p).map), pivot:[...p.pivot]})); }
+function mCommit(){ if(!md.pending) return; md.hist.push(md.pending); md.pending=null; if(md.hist.length>60) md.hist.shift(); md.redo=[]; mUpdateUndo(); mDirty(); renderPartBar(); mDraw(); }
+function mSwap(from,to){ const e=from.pop(); if(!e) return; to.push(e.map(s=>({p:s.p,map:new Map(rt(s.p).map),pivot:[...s.p.pivot]})));
+  e.forEach(s=>{ const r=rt(s.p); r.map=s.map; s.p.pivot=s.pivot; bump(s.p); }); buzz(8); mUpdateUndo(); mDirty(); renderPartBar(); mDraw(); }
+function mUpdateUndo(){ $('#mUndo').disabled=!md?.hist.length; $('#mRedo').disabled=!md?.redo.length; }
+$('#mUndo').onclick=()=>md&&mSwap(md.hist,md.redo); $('#mRedo').onclick=()=>md&&mSwap(md.redo,md.hist);
+
+/* ----- Vue 3D de l'éditeur ----- */
+function mStageSize(){ const r=mStage.getBoundingClientRect(); return {w:r.width,h:r.height}; }
+function modelHeightVox(){ let z=0; md.asset.parts.forEach(p=>{ const b=partFaces(p).bounds; if(b&&b[5]>z) z=b[5]; }); return z; }
+function mFit(){ if(!md) return; const {w,h}=mStageSize(), a=md.asset, pc=camProj(md.cam); const faces=[]; collectFaces(a,{editor:true},pc,faces);
+  let b=faces.length?faceBounds(faces):[1e9,1e9,-1e9,-1e9];
+  // Volume de travail minimal : la référence de taille doit rester visible.
+  const R=modelRadius(), hz=Math.max(mRef==='sonder'?3.8:1.4, modelHeightVox()/a.vpu), y0=mRef==='none'?-1.2:-(Math.max(1.5,R)+1.95);
+  for(const X of [-1.2,1.2]) for(const Y of [y0,1.2]) for(const Z of [0,hz]){ const q=projRaw(pc,X,Y,Z); b=[Math.min(b[0],q[0]),Math.min(b[1],q[1]),Math.max(b[2],q[0]),Math.max(b[3],q[1])]; }
+  const zoom=clamp(Math.min(w*.8/(b[2]-b[0]),h*.78/(b[3]-b[1])),.5,80); md.cam.zoom=zoom; md.cam.ox=w/2-((b[0]+b[2])/2)*zoom; md.cam.oy=h/2-((b[1]+b[3])/2)*zoom; }
+let mFacesDrawn=[], mRaf=false;
+function mDraw(){ if(mRaf) return; mRaf=true; requestAnimationFrame(()=>{ mRaf=false; mDrawNow(); }); }
+function refAsset(){ return mRef==='sonder'?assets.find(x=>x.id==='builtin_sonder'&&x!==md.asset):null; }
+function mDrawNow(){
+  if(!md) return; const {w,h}=mStageSize(), dpr=window.devicePixelRatio||1;
+  if(mCanvas.width!==Math.round(w*dpr)||mCanvas.height!==Math.round(h*dpr)){ mCanvas.width=Math.round(w*dpr); mCanvas.height=Math.round(h*dpr); }
+  const x=mCanvas.getContext('2d'); x.setTransform(dpr,0,0,dpr,0,0); x.clearRect(0,0,w,h);
+  if(mPopulation) return drawPopulation(x,w,h);
+  const a=md.asset, cam=md.cam, pc=camProj(cam), Z=cam.zoom, sp=(X,Y,Zz)=>{ const q=projRaw(pc,X,Y,Zz); return [cam.ox+q[0]*Z, cam.oy+q[1]*Z]; };
+  const sculpt=mMode==='sculpt';
+  // Sol : grille de blocs, et grille de voxels autour de l'origine quand on est proche.
+  const R=Math.max(2,Math.ceil(modelRadius()+1));
+  x.lineWidth=1; x.strokeStyle='rgba(255,255,255,.07)'; x.beginPath();
+  if(sculpt && Z*6/a.vpu>7){ const n=R*a.vpu; for(let i=-n;i<=n;i++){ const t=i/a.vpu; let p=sp(t,-R,0),q=sp(t,R,0); x.moveTo(p[0],p[1]); x.lineTo(q[0],q[1]); p=sp(-R,t,0); q=sp(R,t,0); x.moveTo(p[0],p[1]); x.lineTo(q[0],q[1]); } }
+  x.stroke(); x.strokeStyle='rgba(255,255,255,.2)'; x.beginPath();
+  for(let i=-R;i<=R;i++){ let p=sp(i,-R,0),q=sp(i,R,0); x.moveTo(p[0],p[1]); x.lineTo(q[0],q[1]); p=sp(-R,i,0); q=sp(R,i,0); x.moveTo(p[0],p[1]); x.lineTo(q[0],q[1]); } x.stroke();
+  if(sculpt&&mMirror){ x.strokeStyle='rgba(210,173,114,.6)'; x.setLineDash([6,4]); x.beginPath(); const p=sp(-R,0,0),q=sp(R,0,0); x.moveTo(p[0],p[1]); x.lineTo(q[0],q[1]); x.stroke(); x.setLineDash([]); }
+  // Flèche « avant » du modèle.
+  { const p=sp(R-.2,0,0), q=sp(R+.5,0,0); x.strokeStyle='#d2ad72'; x.lineWidth=2; x.beginPath(); x.moveTo(p[0],p[1]); x.lineTo(q[0],q[1]); x.stroke(); x.fillStyle='#d2ad72'; x.font='12px system-ui'; x.fillText('avant',q[0]+4,q[1]+4); }
+  // Référence de taille à côté du modèle.
+  const refY=-(Math.max(1.5,modelRadius())+1.1);
+  const faces=[];
+  const opts=sculpt?{editor:true,focus:mIsolate?md.active:null,dimAlpha:.18,cut:mCut}:{ground:true,genes:md.test,pose:mPose,t:(performance.now()-md.t0)/1000,heading:0};
+  collectFaces(a,opts,pc,faces);
+  const ra=refAsset();
+  if(mRef==='sonder'&&ra){ const rf=[]; collectFaces(ra,{ground:true,offset:[0,refY],alpha:.28},pc,rf); rf.forEach(f=>f.ref=true); faces.push(...rf); }
+  if(mRef==='block'){ const blk={vpu:1,palette:['#8a8f96'],parts:[{id:'b',pivot:[0,0,0],vox:[0,0,0,0]}],genes:[]}; const rf=[]; collectFaces(blk,{editor:true,offset:[-.5,refY-.5],alpha:.35},pc,rf); rf.forEach(f=>f.ref=true); faces.push(...rf); }
+  drawFaces(x,faces,Z,cam.ox,cam.oy,sculpt&&Z*6/a.vpu>14);
+  mFacesDrawn=faces.filter(f=>!f.ref);
+  // Règle graduée en blocs.
+  const hv=modelHeightVox()/a.vpu, top=Math.max(1,Math.ceil(hv+.5)); const rx=-R+.3, ry=R-.3;
+  let p0=sp(rx,ry,0), p1=sp(rx,ry,top); x.strokeStyle='rgba(231,227,218,.55)'; x.lineWidth=1.5; x.beginPath(); x.moveTo(p0[0],p0[1]); x.lineTo(p1[0],p1[1]);
+  x.fillStyle='rgba(231,227,218,.75)'; x.font='11px system-ui';
+  for(let i=0;i<=top;i++){ const q=sp(rx,ry,i); x.moveTo(q[0]-6,q[1]); x.lineTo(q[0]+6,q[1]); if(i) x.fillText(i+(i===1?' bloc':''),q[0]+9,q[1]+4); } x.stroke();
+  // Pivot de la pièce active.
+  if(sculpt){ const ap=activePart(); const q=sp((ap.pivot[0])/a.vpu,(ap.pivot[1])/a.vpu,(ap.pivot[2])/a.vpu); x.strokeStyle=mTool==='pivot'?'#d2ad72':'rgba(210,173,114,.8)'; x.lineWidth=2; x.beginPath(); x.arc(q[0],q[1],mTool==='pivot'?7:4,0,Math.PI*2); x.stroke(); }
+  const vox=a.parts.reduce((s,p)=>s+rt(p).map.size,0);
+  $('#mHud').textContent = sculpt ? `${activePart().name} · ${vox} voxels · hauteur ${fmtNum(hv)} bloc${hv>=2?'s':''}` : `Individu test · ${RIGS[a.rig].poses.find(p=>p[0]===mPose)?.[1]||''}`;
+}
+const fmtNum=v=>v.toLocaleString('fr-FR',{maximumFractionDigits:1});
+function modelRadius(){ let r=1; const v=md.asset.vpu; md.asset.parts.forEach(p=>{ const b=partFaces(p).bounds; if(b) r=Math.max(r,Math.abs(b[0])/v,Math.abs(b[3])/v,Math.abs(b[1])/v,Math.abs(b[4])/v); }); return r; }
+let mLastW=0; new ResizeObserver(()=>{ if(!md) return; const {w}=mStageSize(); if(Math.abs(w-mLastW)>80){ mLastW=w; mFit(); } mDraw(); }).observe(mStage);
+$('#mZoomIn').onclick=()=>{ mZoomAt(1.3); }; $('#mZoomOut').onclick=()=>{ mZoomAt(1/1.3); }; $('#mFit').onclick=()=>{ mFit(); mDraw(); };
+function mZoomAt(f,cx,cy){ const {w,h}=mStageSize(); cx=cx??w/2; cy=cy??h/2; const c=md.cam, z=clamp(c.zoom*f,.4,120); c.ox=cx-(cx-c.ox)*z/c.zoom; c.oy=cy-(cy-c.oy)*z/c.zoom; c.zoom=z; mDraw(); }
+
+/* ----- Sélection d'une face sous le doigt ----- */
+function inQuad(s,px,py){ let sign=0; for(let i=0;i<4;i++){ const ax=s[i*2],ay=s[i*2+1],bx=s[(i*2+2)%8],by=s[(i*2+3)%8]; const c=(bx-ax)*(py-ay)-(by-ay)*(px-ax); if(Math.abs(c)<1e-9) continue; const sg=c>0?1:-1; if(!sign) sign=sg; else if(sg!==sign) return false; } return true; }
+function mPick(px,py){ for(let i=mFacesDrawn.length-1;i>=0;i--){ const f=mFacesDrawn[i]; if(f.sp&&f.al>.5&&inQuad(f.sp,px,py)) return f; } return null; }
+function groundVoxel(px,py){ const c=md.cam, pc=camProj(c), rx=(px-c.ox)/(6*c.zoom), ry=(py-c.oy)/(3*c.el*c.zoom); const X=rx*pc.cs+ry*pc.sn, Y=-rx*pc.sn+ry*pc.cs, v=md.asset.vpu; return [Math.floor(X*v),Math.floor(Y*v),0]; }
+function brushCells(x,y,z,dir){ const out=[], n=mBrush, o=Math.floor((n-1)/2), ax=dir==null?2:Math.floor(dir/2);
+  for(let i=0;i<n;i++) for(let j=0;j<n;j++){ const d=[0,0,0]; const axes=[0,1,2].filter(k=>k!==ax); d[axes[0]]=i-o; d[axes[1]]=j-o; out.push([x+d[0],y+d[1],z+d[2]]); } return out; }
+function applyAt(cells, mode){
+  const p=activePart(), partner=mMirror?(partnerOf(p)||p):null, ci=colorIndex();
+  let changed=false;
+  const put=(part,x,y,z)=>{ const m=rt(part).map, k=KEY(x,y,z);
+    if(mode==='add'){ if(!m.has(k)){ m.set(k,ci); changed=true; } }
+    else if(mode==='remove'){ if(m.delete(k)) changed=true; }
+    else if(mode==='paint'){ if(m.has(k)&&m.get(k)!==ci){ m.set(k,ci); changed=true; } } };
+  for(const [x,y,z] of cells){ put(p,x,y,z); if(partner){ const my=-1-y; if(!(partner===p&&my===y)) put(partner,x,my,z); } }
+  if(changed){ bump(p); if(partner) bump(partner); }
+  return changed;
+}
+let mPtrs=new Map(), mGest=null, mStroke=null, mTap=null, mOrbit=null;
+mCanvas.addEventListener('pointerdown',e=>{
+  if(!md) return; e.preventDefault(); mCanvas.setPointerCapture(e.pointerId);
+  const r=mCanvas.getBoundingClientRect(), p={x:e.clientX-r.left,y:e.clientY-r.top}; mPtrs.set(e.pointerId,p);
+  if(mPtrs.size===1) mTap={t:performance.now(),n:1,moved:false,start:p,drew:false}; else if(mTap) mTap.n=Math.max(mTap.n,mPtrs.size);
+  if(mPtrs.size===1){
+    if(mPopulation){ popTap(p); return; }
+    const penOnlyTouch=settings.penOnly&&e.pointerType==='touch';
+    if(mMode!=='sculpt'||mTool==='orbit'||penOnlyTouch||e.button===2){ mOrbit={x:p.x,y:p.y,az:md.cam.az,el:md.cam.el}; return; }
+    mStrokeStart(p);
+  } else { if(mStroke){ mStrokeCancel(); } mOrbit=null; const arr=[...mPtrs.values()]; mGest={c0:cen(arr),d0:dst(arr),z0:md.cam.zoom,ox0:md.cam.ox,oy0:md.cam.oy}; }
+});
+const cen=a=>({x:a.reduce((s,p)=>s+p.x,0)/a.length,y:a.reduce((s,p)=>s+p.y,0)/a.length}), dst=a=>a.length<2?1:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)||1;
+mCanvas.addEventListener('pointermove',e=>{
+  if(!md||!mPtrs.has(e.pointerId)) return; e.preventDefault(); const r=mCanvas.getBoundingClientRect(), p={x:e.clientX-r.left,y:e.clientY-r.top}; mPtrs.set(e.pointerId,p);
+  if(mTap&&Math.hypot(p.x-mTap.start.x,p.y-mTap.start.y)>12) mTap.moved=true;
+  if(mOrbit){ md.cam.az=mOrbit.az+(p.x-mOrbit.x)*.01; md.cam.el=clamp(mOrbit.el+(p.y-mOrbit.y)*.006,.28,1.18); mDraw(); return; }
+  if(mGest&&mPtrs.size>=2){ const arr=[...mPtrs.values()], c=cen(arr), z=clamp(mGest.z0*dst(arr)/mGest.d0,.4,120); md.cam.ox=c.x-(mGest.c0.x-mGest.ox0)*z/mGest.z0; md.cam.oy=c.y-(mGest.c0.y-mGest.oy0)*z/mGest.z0; md.cam.zoom=z; mDraw(); return; }
+  if(mStroke) mStrokeMove(p);
+});
+function mEnd(e){ if(!mPtrs.has(e.pointerId)) return; mPtrs.delete(e.pointerId);
+  if(mStroke&&mPtrs.size===0){ mStrokeEnd(); }
+  if(mPtrs.size===0){ if(mTap&&mTap.n>=2&&!mTap.moved&&!mTap.drew&&performance.now()-mTap.t<350){ mTap.n===2?mSwap(md.hist,md.redo):mSwap(md.redo,md.hist); } mGest=null; mOrbit=null; mTap=null; } }
+mCanvas.addEventListener('pointerup',mEnd); mCanvas.addEventListener('pointercancel',e=>{ if(mStroke) mStrokeCancel(); mEnd(e); });
+mCanvas.addEventListener('contextmenu',e=>e.preventDefault());
+mCanvas.addEventListener('wheel',e=>{ if(!md) return; e.preventDefault(); const r=mCanvas.getBoundingClientRect(); mZoomAt(e.deltaY<0?1.15:1/1.15,e.clientX-r.left,e.clientY-r.top); },{passive:false});
+
+function mStrokeStart(p){
+  mDrawNow(); const hit=mPick(p.x,p.y), a=md.asset, ap=activePart();
+  if(mTool==='pick'){ if(hit){ const part=a.parts.find(q=>q.id===hit.pid), ci=rt(part).map.get(KEY(hit.x,hit.y,hit.z)); if(ci!=null){ setColor(fromHex(a.palette[ci])); toast('Couleur prélevée'); } } return; }
+  if(mTool==='pivot'){ mSnapshot([ap]); const c=hit?[hit.x+.5,hit.y+.5,hit.z+.5]:groundVoxel(p.x,p.y).map(v=>v+.5); if(!hit) c[2]=0; ap.pivot=c; mCommit(); toast('Pivot placé'); return; }
+  if((mTool==='remove'||mTool==='paint')&&hit&&hit.pid!==ap.id){ md.active=hit.pid; renderPartBar(); mDraw(); toast('Pièce active : '+a.parts.find(q=>q.id===hit.pid).name); return; }
+  const partner=mMirror?partnerOf(ap):null; mSnapshot(partner?[ap,partner]:[ap]);
+  mStroke={dir:null,plane:null,changed:false};
+  mStrokeApply(hit,p);
+}
+function mStrokeApply(hit,p){
+  let cells=null;
+  if(mTool==='add'){
+    let t, dir;
+    if(hit){ dir=hit.d; const D=DIRS[dir]; t=[hit.x+D[0],hit.y+D[1],hit.z+D[2]]; } else if(mStroke.dir==null||mStroke.dir===4){ dir=4; t=groundVoxel(p.x,p.y); } else return;
+    const ax=Math.floor(dir/2);
+    if(mStroke.dir==null){ mStroke.dir=dir; mStroke.plane=t[ax]; } else if(mStroke.dir!==dir||t[ax]!==mStroke.plane) return;
+    cells=brushCells(t[0],t[1],t[2],dir);
+  } else if(hit&&hit.pid===md.active){ if(mStroke.dir==null){ mStroke.dir=hit.d; } cells=brushCells(hit.x,hit.y,hit.z,hit.d); }
+  if(cells&&applyAt(cells,mTool)){ mStroke.changed=true; if(mTap) mTap.drew=true; mDrawNow(); }
+}
+function mStrokeMove(p){ mStrokeApply(mPick(p.x,p.y),p); }
+function mStrokeEnd(){ if(mStroke.changed) mCommit(); else md.pending=null; mStroke=null; }
+function mStrokeCancel(){ if(md.pending){ md.pending.forEach(s=>{ rt(s.p).map=s.map; bump(s.p); }); md.pending=null; } mStroke=null; mDraw(); }
+
+/* ----- Aperçu animé (poses, 16 directions) ----- */
+function renderMPreviewCtl(){
+  const a=md.asset, poses=RIGS[a.rig].poses; if(!poses.some(p=>p[0]===mPose)) mPose='idle';
+  $('#mPvModes').innerHTML=poses.map(([k,l])=>`<button data-p="${k}" class="${k===mPose?'on':''}">${l}</button>`).join('')+
+    `<button data-h="-1" aria-label="Tourner à gauche">⟲</button><button data-spin="1" class="${mSpin?'on':''}">Rotation</button><button data-h="1" aria-label="Tourner à droite">⟳</button>`;
+  $$('#mPvModes [data-p]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); mPose=b.dataset.p; md.t0=performance.now(); renderMPreviewCtl(); if(mMode!=='sculpt') mDraw(); });
+  $$('#mPvModes [data-h]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); mHeading=(mHeading+ +b.dataset.h+16)%16; renderMPreviewCtl(); });
+  $('#mPvModes [data-spin]').onclick=e=>{ e.stopPropagation(); mSpin=!mSpin; renderMPreviewCtl(); };
+  $('#mPvNote').textContent=`Direction ${mHeading+1}/16 · comme en jeu, avec les mutations de l’individu test.`;
+  $('#mPvLabel').textContent=poses.find(p=>p[0]===mPose)[1];
+}
+$('#mPreview').addEventListener('click',e=>{ if(e.target.closest('button')) return; if(window.innerWidth<700) $('#mPreview').classList.toggle('big'); });
+let lastSpin=0;
+(function mLoop(ts){
+  if(md&&route.view==='editor'){
+    if(mSpin&&ts-lastSpin>260){ mHeading=(mHeading+1)%16; lastSpin=ts; $('#mPvNote').textContent=`Direction ${mHeading+1}/16 · comme en jeu, avec les mutations de l’individu test.`; }
+    const c=$('#mPreviewCanvas'), x=c.getContext('2d'); x.setTransform(1,0,0,1,0,0); x.fillStyle='#15191e'; x.fillRect(0,0,c.width,c.height);
+    const t=(performance.now()-md.t0)/1000;
+    // Cadrage stable : bornes calculées sur la pose debout.
+    if(!md.pvB||md.pvKey!==mHeading+'|'+JSON.stringify(md.test)+md.asset.parts.length+rtVersion()){ const f=[]; collectFaces(md.asset,{ground:true,genes:md.test,pose:'idle',heading:mHeading},camProj({az:Math.PI/4,el:.72}),f); md.pvB=f.length?faceBounds(f):null; if(md.pvB){ const b=md.pvB, w=b[2]-b[0], h=b[3]-b[1]; md.pvB=[b[0]-w*.35,b[1]-h*.3,b[2]+w*.35,b[3]+h*.12]; } md.pvKey=mHeading+'|'+JSON.stringify(md.test)+md.asset.parts.length+rtVersion(); }
+    // Ombre au sol.
+    renderModelFit(x,md.asset,{x:0,y:0,w:c.width,h:c.height},{genes:md.test,pose:mPose,t,heading:mHeading,bounds:md.pvB||undefined,pad:.92});
+    if(mMode!=='sculpt'&&!mPopulation&&mPose!=='idle') mDraw();
+  }
+  requestAnimationFrame(mLoop);
+})(0);
+function rtVersion(){ return md.asset.parts.reduce((s,p)=>s+rt(p).v,0); }
+
+/* ----- Mode mutant ----- */
+$('#mMutant').onclick=()=>{ mMode=mMode==='sculpt'?'mutant':'sculpt'; mPopulation=null; applyMode(); };
+function applyMode(){
+  const mut=mMode==='mutant'; $('#mMutant').classList.toggle('on',mut); $('#mMutant').innerHTML=mut?'✎<span> Sculpter</span>':'🧬<span> Mutations</span>';
+  $('#mSculptPanel').classList.toggle('hidden',mut); $('#mGenesPanel').classList.toggle('hidden',!mut); $('#partBar').classList.toggle('hidden',mut);
+  $('#mZoomBox').classList.toggle('hidden',!!mPopulation);
+  if(mut) renderGenes(); mFit(); mDraw();
+}
+function geneTargetsLabel(g){ const T=GENE_TYPES[g.type]; if(T.global) return 'tout le corps'; const a=md.asset; const n=(g.targets||[]).map(id=>a.parts.find(p=>p.id===id)?.name).filter(Boolean); return n.length?n.join(', '):'aucune pièce choisie'; }
+function fmtGene(g,v){ return g.type==='hue'?`${v>0?'+':''}${Math.round(v)}°`: g.type==='show'?(v>=.5?'présent':'absent'): g.type==='grow'?Math.round(v*100)+' %':'×'+(+v).toFixed(2); }
+function renderGenes(){
+  if(!md) return; const a=md.asset, box=$('#mGenesList'); a.genes=a.genes||[];
+  $('#mGenesIntro').textContent = a.genes.length ? `${a.genes.length} mutation${a.genes.length>1?'s':''} possible${a.genes.length>1?'s':''} pour l’espèce « ${a.name} ». Règle les extrêmes, puis teste.` : 'Aucune mutation encore. Ajoute-en une pour définir comment les individus de cette espèce peuvent varier.';
+  box.innerHTML='';
+  a.genes.forEach((g,gi)=>{ const T=GENE_TYPES[g.type]; const card=document.createElement('div'); card.className='gene';
+    const v=md.test[g.id]??g.base;
+    card.innerHTML=`<div class="gene-head"><input class="gene-name" value="${esc(g.name)}" aria-label="Nom de la mutation"><button class="icon ghost" data-del aria-label="Supprimer la mutation">✕</button></div>
+      <div class="gene-meta">${esc(T.label)} · <button class="linkbtn" data-tg>${esc(geneTargetsLabel(g))}</button></div>
+      ${g.type==='show'?`<div class="gene-row"><span>Peut être</span><div class="seg small">${[['0','absente'],['both','variable'],['1','toujours']].map(([k,l])=>`<button data-sh="${k}" class="${(k==='both'&&g.min===0&&g.max===1)||(k==='0'&&g.max===0)||(k==='1'&&g.min===1)?'on':''}">${l}</button>`).join('')}</div></div>`:
+      `<div class="gene-row"><span>Minimum</span><input type="range" data-k="min" min="${T.lo}" max="${T.hi}" step="${T.step}" value="${g.min}"><b>${fmtGene(g,g.min)}</b></div>
+      <div class="gene-row"><span>Maximum</span><input type="range" data-k="max" min="${T.lo}" max="${T.hi}" step="${T.step}" value="${g.max}"><b>${fmtGene(g,g.max)}</b></div>`}
+      <div class="gene-row test"><span>Test</span><input type="range" data-k="test" min="${Math.min(g.min,g.max)}" max="${Math.max(g.min,g.max)}" step="${T.step}" value="${v}"><b>${fmtGene(g,v)}</b></div>`;
+    card.querySelector('.gene-name').onchange=e=>{ g.name=e.target.value.trim()||g.name; mDirty(); };
+    card.querySelector('[data-del]').onclick=async()=>{ if(await confirmBox('Supprimer cette mutation ?',`« ${g.name} » ne pourra plus apparaître chez les individus.`,'Supprimer',true)){ a.genes.splice(gi,1); delete md.test[g.id]; mDirty(); renderGenes(); mDraw(); } };
+    card.querySelector('[data-tg]').onclick=()=>{ if(!T.global) chooseTargets(g); };
+    card.querySelectorAll('[data-sh]').forEach(b=>b.onclick=()=>{ const k=b.dataset.sh; [g.min,g.max]=k==='both'?[0,1]:k==='0'?[0,0]:[1,1]; g.base=g.max>=.5?1:0; md.test[g.id]=k==='both'?(md.test[g.id]??1):g.min; mDirty(); renderGenes(); mDraw(); });
+    card.querySelectorAll('input[type=range]').forEach(r=>r.oninput=()=>{ const k=r.dataset.k, val=+r.value;
+      if(k==='test') md.test[g.id]=val; else { g[k]=val; const lo=Math.min(g.min,g.max), hi=Math.max(g.min,g.max); md.test[g.id]=clamp(md.test[g.id]??g.base,lo,hi); mDirty(); }
+      r.nextElementSibling.textContent=fmtGene(g,val); if(k!=='test'){ const t=card.querySelector('[data-k=test]'); t.min=Math.min(g.min,g.max); t.max=Math.max(g.min,g.max); t.value=md.test[g.id]; t.nextElementSibling.textContent=fmtGene(g,md.test[g.id]); }
+      mDraw(); });
+    box.appendChild(card); });
+}
+async function chooseTargets(g){
+  const a=md.asset, sel=new Set(g.targets||[]);
+  const v=await sheet(`<h3>Pièces concernées</h3><p>Les pièces attachées suivent automatiquement.</p><div class="chips" id="tgChips">${a.parts.map(p=>`<button class="chip ${sel.has(p.id)?'on':''}" data-id="${p.id}">${esc(p.name)}</button>`).join('')}</div><div class="acts"><button data-v="ok" class="primary">Valider</button></div>`,
+    s=>s.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>{ const id=b.dataset.id; sel.has(id)?sel.delete(id):sel.add(id); b.classList.toggle('on'); }));
+  if(v==='ok'){ g.targets=[...sel]; mDirty(); renderGenes(); mDraw(); }
+}
+$('#mAddGene').onclick=async()=>{
+  const v=await sheet(`<h3>Nouvelle mutation</h3><div class="menu-list">${Object.entries(GENE_TYPES).map(([k,T])=>`<button data-v="${k}"><span>🧬</span><div><b>${T.label}</b><br><small class="muted">${T.desc}</small></div></button>`).join('')}</div>`);
+  if(!v) return; const T=GENE_TYPES[v], a=md.asset;
+  const g={id:'g_'+uid().slice(-6), name:T.label.replace(/ \(.*\)/,''), type:v, targets:T.global?[]:[md.active], min:T.min, max:T.max, base:T.base};
+  a.genes.push(g); md.test[g.id]=g.base; mDirty(); renderGenes(); mDraw();
+  if(!T.global) chooseTargets(g);
+};
+const randGenes=()=>{ const o={}; (md.asset.genes||[]).forEach(g=>{ const T=GENE_TYPES[g.type], lo=Math.min(g.min,g.max), hi=Math.max(g.min,g.max); let v=lo+Math.random()*(hi-lo); if(g.type==='show') v=Math.random()<.5?lo:hi; v=Math.round(v/T.step)*T.step; o[g.id]=v; }); return o; };
+$('#mRandom').onclick=()=>{ md.test=randGenes(); mPopulation=null; applyMode(); };
+$('#mBase').onclick=()=>{ md.test={}; (md.asset.genes||[]).forEach(g=>md.test[g.id]=g.base); mPopulation=null; applyMode(); };
+$('#mPop').onclick=()=>{ mPopulation=Array.from({length:9},randGenes); applyMode(); toast('Touche un individu pour l’étudier'); };
+function popCells(w,h){ const n=mPopulation.length, cols=w>h?(n>6?5:3):3, rows=Math.ceil(n/cols), cw=w/cols, ch=(h-40)/rows; return mPopulation.map((g,i)=>({g,x:(i%cols)*cw,y:40+Math.floor(i/cols)*ch,w:cw,h:ch})); }
+function drawPopulation(x,w,h){
+  x.fillStyle='rgba(231,227,218,.8)'; x.font='13px system-ui'; x.fillText('Population simulée : 9 individus tirés au hasard dans tes plages de mutation',12,24);
+  const cells=popCells(w,h); let common=null;
+  // Même échelle pour tous : on compare vraiment les tailles.
+  for(const c of cells){ const f=[]; collectFaces(md.asset,{ground:true,genes:c.g,heading:0},camProj({az:Math.PI/4,el:.72}),f); const b=faceBounds(f); c.b=b; if(!common) common=[b[2]-b[0],b[3]-b[1]]; else { common[0]=Math.max(common[0],b[2]-b[0]); common[1]=Math.max(common[1],b[3]-b[1]); } }
+  for(const c of cells){ x.strokeStyle='rgba(255,255,255,.08)'; x.strokeRect(c.x+3,c.y+3,c.w-6,c.h-6);
+    const zoom=Math.min(c.w*.8/common[0],c.h*.8/common[1]); const f=[]; collectFaces(md.asset,{ground:true,genes:c.g,heading:0},camProj({az:Math.PI/4,el:.72}),f);
+    const b=c.b; drawFaces(x,f,zoom,c.x+c.w/2-((b[0]+b[2])/2)*zoom,c.y+c.h*.9-b[3]*zoom,false); }
+}
+function popTap(p){ const {w,h}=mStageSize(); const c=popCells(w,h).find(c=>p.x>=c.x&&p.x<c.x+c.w&&p.y>=c.y&&p.y<c.y+c.h); if(!c) return; md.test={...c.g}; mPopulation=null; applyMode(); renderGenes(); toast('Individu chargé dans le test'); }
+
+/* ----- Menu du modèle ----- */
+$('#mMenu').onclick=async()=>{
+  if(!md) return; const a=md.asset;
+  const v=await sheet(`<h3>${esc(a.name)}</h3><div class="menu-list">
+    <button data-v="rig"><span>⚙</span>Squelette : ${RIGS[a.rig].label}</button>
+    <button data-v="tags"><span>#</span>Tags</button>
+    <button data-v="exp"><span>⇪</span>Exporter ce modèle</button>
+    ${a.builtin?'<button data-v="orig"><span>↺</span>Revenir au modèle d’origine de Sonder</button>':''}
+    <button data-v="clearall" class="danger"><span>✕</span>Tout effacer</button></div>`);
+  if(v==='rig'){ const r=await sheet(`<h3>Squelette</h3><p>Il décide des poses d’animation disponibles.</p><div class="menu-list">${Object.entries(RIGS).map(([k,R])=>`<button data-v="${k}">${k===a.rig?'✓ ':''}${R.label}</button>`).join('')}</div>`); if(r){ a.rig=r; mDirty(); renderMPreviewCtl(); } }
+  if(v==='tags'){ const n=await askText('Tags',(a.tags||[]).join(', '),'Enregistrer','ex. forêt, nocturne'); if(n!==null){ a.tags=parseTags(n); mDirty(); } }
+  if(v==='exp'){ await mFlush(); exportAssets([a],a.name); }
+  if(v==='orig'&&await confirmBox('Revenir à l’original ?','Tes modifications sur ce modèle seront remplacées par la version extraite du moteur.','Revenir',true)){
+    const e=builtinCatalog().find(e=>e.key===a.builtin.key), n=await makeBuiltin(e); Object.assign(a,{parts:n.parts,palette:n.palette,genes:n.genes,rig:n.rig,vpu:n.vpu}); md.hist=[]; md.redo=[]; mDirty(); openModelEditor(a.id); }
+  if(v==='clearall'&&await confirmBox('Tout effacer ?','Toutes les pièces seront vidées (annulable).','Effacer',true)){ mSnapshot(a.parts); a.parts.forEach(p=>{ rt(p).map.clear(); bump(p); }); mCommit(); }
+};
+window.addEventListener('keydown',e=>{ if(!md||route.view!=='editor'||e.target.tagName==='INPUT') return;
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){ e.preventDefault(); e.shiftKey?mSwap(md.redo,md.hist):mSwap(md.hist,md.redo); }
+  const t={a:'add',r:'remove',p:'paint',i:'pick',o:'orbit'}[e.key]; if(t){ mTool=t; renderMTools(); } });
 
 /* ================= Démarrage ================= */
 (async function init(){
   try{ await DB.open(); assets=((await DB.all())||[]).map(normalizeAsset); const st=await DB.get('settings'); if(st) settings={...settings,...st}; }
   catch(e){ toast('Stockage indisponible : les assets ne seront pas conservés', 5000); }
   await migrateV01();
+  try{ if((await DB.get('builtinSeed'))!==1){ await seedBuiltins(false); await DB.set('builtinSeed',1); } }catch(e){ console.warn(e); }
   try{ if(navigator.storage?.persist && !(await navigator.storage.persisted())) navigator.storage.persist(); }catch{}
   history.replaceState({view:'home'},''); go({view:'home'}, false);
   if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('service-worker.js').catch(()=>{});
 })();
-window.__sonder={ get ed(){return ed;}, get assets(){return assets;} };
+window.__sonder={ get ed(){return ed;}, get md(){return md;}, get assets(){return assets;} };
 })();
 </script>
 </body>
