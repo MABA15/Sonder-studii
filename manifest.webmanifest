@@ -1,7 +1,7 @@
 {
   "name": "Sonder Asset Studio",
   "short_name": "Sonder Studio",
-  "description": "Studio portable de création voxel, modèles, génétique et poses pour Sonder",
+  "description": "Studio portable de création voxel, modèles, crafting, rigs, génétique et poses pour Sonder",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

@@ -1,22 +1,30 @@
-Sonder Studio V2.1 REV1 — Portable
-Base : SonderStudio_v2 fourni par l'utilisateur
+Sonder Studio V2.2 REV2 — Portable
+Base : Sonder Studio V2.1 REV1 portable
 
-Ajouts principaux
-- Génétique : croisement Parents A/B, héritage + mutation, âge (nouveau-né = 46 % de la taille adulte), sexe, santé, dimorphisme, gènes liés.
-- Poses : poses personnalisées, pièces autour de leurs pivots, keyframes, durée, boucle, timeline, rotations X/Y/Z.
-- Sculpture : boîte pleine, ligne 3D, extrusion, symétrie gauche/droite + avant/arrière, sélection, copier/couper/coller, déplacer, rotation 90°.
-- MagicaVoxel : import/export .vox (VOX 150).
-- Blocs : 6 faces indépendantes, rendu opaque/cutout/transparent, variantes aléatoires ou animées + FPS.
-- Mise en scène : aperçu sur biome (plaine, forêt, marais/delta, désert, montagne, toundra).
-- Générateur : rampes de couleurs et textures terrain procédurales.
-- Palette : sélecteur étendu HEX + RGB + sélecteur natif depuis le bouton +.
-- Ergonomie modèle : panneaux outils (gauche) et aperçu (droite) masquables indépendamment, barre supérieure mobile défilante.
-- Compatibilité : anciens blocs V2 à face "side" migrés automatiquement vers Nord/Sud/Est/Ouest.
+Nouveautés V2.2
+- Nouvelle bibliothèque CRAFTING dédiée aux rendus d'assemblages.
+- Le Crafting reste strictement visuel : aucune recette ou règle de gameplay n'est imposée au moteur Sonder.
+- Composition flexible : asset précis, nom libre/futur asset ou tag/famille ; quantité ; composant requis, optionnel ou alternative ; groupe d'alternatives ; notes.
+- Les visuels Crafting utilisent le même sculpteur voxel 3D que les objets et peuvent eux-mêmes être utilisés comme composants d'autres assemblages.
 
-Format export
-- manifest formatVersion 3
-- modèles formatVersion 2
-- terrains : top/bottom/north/south/east/west + metadata de rendu/variantes
-- modèles : gènes liés, poses personnalisées, traits sexuels, taux de mutation
+Rig / animation
+- Rig hiérarchique explicite : vue parent/enfant et édition des attaches.
+- Contraintes d'articulation X/Y/Z par pièce ; les rotations de poses respectent ces limites.
+- Contraintes incluses dans model.json.
+- Bibliothèque de poses réutilisables entre modèles et espèces.
+- Timeline améliorée avec tête de lecture, marqueurs d'images clés cliquables et lecture/pause réelle.
 
-Cette REV n'inclut PAS le branchement au moteur Sonder, conformément à la demande.
+Validation
+- Validation automatique avant tout export.
+- Détection : modèle vide, parent absent, boucle hiérarchique, index couleur invalide, limites inversées, poses invalides, faces/frames manquantes et références Crafting absentes.
+- Validation manuelle disponible depuis le menu du modèle.
+- Les avertissements restent exportables ; l'utilisateur garde la main sur l'export.
+
+Compatibilité / export
+- Manifest Sonder Assets formatVersion 4.
+- Sonder Model formatVersion 3.
+- Restauration compatible avec les anciennes releases V2/REV1.
+- studio.json sauvegarde aussi la bibliothèque de poses.
+- Portable/PWA, aucune dépendance externe requise pour éditer ou exporter.
+
+Toujours exclu de cette révision : branchement direct du studio au moteur Sonder.
