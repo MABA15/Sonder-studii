@@ -1,56 +1,38 @@
-Sonder Studio V2.3 — Portable
-Base : Sonder Studio V2.2 REV2
+Sonder Studio V2.6 — Portable
+Base : Sonder Studio V2.5
 
-1. Bibliothèque complétée depuis le moteur Sonder V0.7.5.4
-- 22 espèces animales reconstruites en voxels, pièces animables :
-  canard, cerf, héron, loutre, lièvre, sanglier, loup, renard, castor, mouflon,
-  ours, lynx, bison, gazelle, dromadaire, fennec, serpent, scorpion, crocodile,
-  bouquetin, marmotte, aigle.
-- 26 arbres et plantes utilisés en jeu : sapin élancé, conifère plein, feuillu dôme,
-  feuillu rond, bouleau, acacia, saule, sapin enneigé, genévrier, krummholz,
-  touffe alpine, arbuste nain, buisson, fougère, fleurs, herbes, roseaux,
-  quenouilles, nénuphars, buisson de marais, saguaro, cactus baril, cactus
-  raquette, agave, arbuste sec, herbe sèche.
-- 7 composants animaux (bibliothèque Objets) : os creux, viande blanche, gras,
-  duvet, plumes, peau, tendon.
-- Formes et couleurs reprises à l'identique de render/samples.go.
-  Échelle : ×0,5 comme dans la vue principale du jeu (animaux et arbres),
-  ×0,42 pour les plantes à maturité.
-- Nouveaux squelettes : Oiseau (canard, héron, aigle) et Rampant (serpent, scorpion),
-  avec leurs poses.
-- Les anciens modèles (4 gabarits, 7 flores simplifiées) restent disponibles,
-  étiquetés « rendu de secours ».
-- Installation automatique à la mise à jour : tes modèles modifiés et tes
-  créations ne sont jamais écrasés.
+1. Biomes branchés au moteur
+- Chaque biome de surface a un encadré « Dans le jeu » : quel biome du jeu il remplace,
+  ce qui diffère du moteur (surface, couches, socle, poches), et les matières que le jeu ne
+  connaît pas (tes blocs perso, l'eau et la lave ne peuvent pas servir de sol).
+- biome.json exporté contient un bloc « engine » lu par le patch moteur fourni à part
+  (Sonder_Patch_Biomes_Studio26.zip). Seules les parties modifiées sont appliquées.
+- Un biome créé dans le studio n'agit dans le jeu que si tu choisis le biome qu'il remplace.
 
-2. Biomes
-- Les 12 biomes du moteur (voxelworld/world.go) avec leurs couleurs de sol.
-- Fiche écologique par modèle : biomes, rôle, proie ou prédateur, gabarit
-  physique, taille des groupes, eau (fauna_spawn.go, predator.go).
-- Filtre par biome dans les bibliothèques.
-- Accueil : une carte par biome avec le décompte herbivores / prédateurs / plantes.
-- Planche de biome : diorama à l'échelle du jeu, espèces regroupées, ajout
-  d'une espèce existante ou nouvelle au biome.
-- Détection des lacunes : aucun prédateur (Savane), un seul herbivore (Alpin),
-  pas d'arbres, pas de plantes.
-- Mise en scène des modèles : les 12 biomes du moteur.
-- Validation : avertissement si une espèce créée n'a aucun biome.
+2. Simplification
+- Accueil : recherche dans tout le studio, bouton unique « + Créer », favoris.
+- Les boutons de générateurs sont regroupés dans « Générateurs ».
+- Terrain : les 24 matières voxel du moteur sont toutes là (13 ajoutées).
+- Les anciens modèles de secours et les 18 matériaux de la V0.1 sont rangés dans
+  « Afficher l'historique » (ils restent disponibles, et visibles si tu les as modifiés).
 
-3. Blocs avancés et textures
-- Variantes liées désormais réellement utilisées : animation (lecture dans
-  l'aperçu, vitesse réglable, ordre modifiable) ou variantes aléatoires (sol mélangé).
-- Bouton « + Image / + Variante » dans l'éditeur de bloc et passage de l'une à l'autre.
-- Transparence visible dans l'aperçu : découpe ou transparent avec opacité.
-- Côtés liés : peindre un côté met à jour les quatre.
-- Générateur de textures raccordables : terre, herbe (bord de terre sur les
-  côtés), pierre, sable, bois (cernes sur le dessus), feuillage, eau, neige.
-  Crée un nouveau bloc ou s'applique aux faces du bloc ouvert.
+3. Sécurité du travail
+- Versions : le studio garde l'état précédent de chaque asset modifié (une version toutes les
+  3 minutes au plus, les 10 dernières). ⋯ › Versions précédentes pour revenir en arrière.
+- Corbeille : un élément supprimé reste récupérable 30 jours (Accueil › Corbeille).
+- Annuler / rétablir (↶ ↷) dans l'éditeur de biome et dans le profil d'espèce.
 
-Export
-- manifest.json : eco (fiche écologique), opacity, sideLink, linkedVariants.
-- model.json : eco.
-- Restauration compatible V2 / V2.1 / V2.2.
+4. Nouveaux générateurs
+- Arbres : rond, conique, parasol, colonnaire, pleureur, palmier ; hauteur, tronc, couronne,
+  branches, inclinaison, fruits ou fleurs, racines. 7 points de départ.
+- Plantes : herbe, buisson, fleurs, fougère, cactus, roseau, champignons. 7 points de départ.
+- Constructions (1 voxel = 1 bloc du monde) : emprise, hauteur des murs, piliers tous les
+  N blocs (3 dans le moteur), porte 2×3, étage de 45 à 70 % de l'emprise avec rampe,
+  toit plat (moteur) ou à deux pans (conception), étapes de chantier du moteur.
+- Planches PNG : une bibliothèque (ce qui est affiché) ou un biome (coupe du sol + espèces).
 
-Remarques
-- Le serpent du moteur est une chaîne de segments séparés : il est reproduit tel quel.
-- Toujours exclu : branchement direct du studio au moteur Sonder.
+5. Performances
+- Réglages › Vérifier les performances : temps de rendu, stockage, modèles les plus lourds.
+- Option « Aperçus allégés » : moins de pixels dans les aperçus 3D, plus fluide.
+
+Tes assets, retouches et biomes modifiés de la V2.5 sont conservés.
