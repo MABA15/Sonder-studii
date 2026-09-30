@@ -1,38 +1,29 @@
-Sonder Studio V2.6 — Portable
-Base : Sonder Studio V2.5
+Sonder Studio V2.7 — Portable
+Base : Sonder Studio V2.6
 
-1. Biomes branchés au moteur
-- Chaque biome de surface a un encadré « Dans le jeu » : quel biome du jeu il remplace,
-  ce qui diffère du moteur (surface, couches, socle, poches), et les matières que le jeu ne
-  connaît pas (tes blocs perso, l'eau et la lave ne peuvent pas servir de sol).
-- biome.json exporté contient un bloc « engine » lu par le patch moteur fourni à part
-  (Sonder_Patch_Biomes_Studio26.zip). Seules les parties modifiées sont appliquées.
-- Un biome créé dans le studio n'agit dans le jeu que si tu choisis le biome qu'il remplace.
+Constructions en voxels terrain
+- Nouvel éditeur de construction, séparé des modèles (animaux, agents, flore) :
+  1 cube = 1 voxel du monde (25 cm), sans couleur : chaque voxel est un bloc de la
+  bibliothèque Terrain et s'affiche avec sa texture. Même caméra que le jeu.
+- Palette = bibliothèque Terrain : les 25 matières du jeu, tes propres blocs, et l'historique.
+  « Bibliothèque » ouvre tous les blocs ; « Nouveau bloc généré » en crée un sans quitter l'éditeur.
+  Tes blocs perso sont marqués « ! » : inconnus du moteur.
+- Nouvelle matière : Bois extrait (la matière de construction du moteur, ID 19).
+- Outils : poser, retirer, rectangle (plein ou contour, avec hauteur), mur (ligne avec hauteur),
+  repeindre, pipette, étape, déplacer. On glisse le doigt pour poser en continu.
+- Travail niveau par niveau (▲ ▼) : ce qui est au-dessus est masqué, ou en transparence
+  avec « Voir au-dessus ». Vue 3D (4 orientations) ou vue de dessus « Plan ».
+- Sonder à l'échelle à côté de la construction (bouton 🧍).
+- Panneau Matières et chantier : dimensions en voxels et en mètres, nombre de voxels à
+  rassembler par matière, « ⇄ » pour remplacer une matière partout, étapes du chantier
+  (voir jusqu'à une étape, renommer).
+- Menu : pivoter d'un quart de tour, miroir, poser au sol, planche PNG, versions, export.
+- Export : build.json = liste de voxels [x, y, z, matière, étape] avec l'équivalent moteur
+  de chaque matière (nom et ID). Le moteur ne lit pas encore ce fichier.
+- Générateur de construction : il produit maintenant des voxels terrain ; on choisit la
+  matière des murs, piliers, toit, sol, étage et rampe.
+- Les 4 constructions du moteur sont refaites en voxels terrain (sol en terre, piliers et toit
+  en bois extrait, murs en terre). Celles que tu avais retouchées restent en ancien format :
+  ⋯ › « Convertir en voxels terrain » crée une copie en blocs (couleur la plus proche).
 
-2. Simplification
-- Accueil : recherche dans tout le studio, bouton unique « + Créer », favoris.
-- Les boutons de générateurs sont regroupés dans « Générateurs ».
-- Terrain : les 24 matières voxel du moteur sont toutes là (13 ajoutées).
-- Les anciens modèles de secours et les 18 matériaux de la V0.1 sont rangés dans
-  « Afficher l'historique » (ils restent disponibles, et visibles si tu les as modifiés).
-
-3. Sécurité du travail
-- Versions : le studio garde l'état précédent de chaque asset modifié (une version toutes les
-  3 minutes au plus, les 10 dernières). ⋯ › Versions précédentes pour revenir en arrière.
-- Corbeille : un élément supprimé reste récupérable 30 jours (Accueil › Corbeille).
-- Annuler / rétablir (↶ ↷) dans l'éditeur de biome et dans le profil d'espèce.
-
-4. Nouveaux générateurs
-- Arbres : rond, conique, parasol, colonnaire, pleureur, palmier ; hauteur, tronc, couronne,
-  branches, inclinaison, fruits ou fleurs, racines. 7 points de départ.
-- Plantes : herbe, buisson, fleurs, fougère, cactus, roseau, champignons. 7 points de départ.
-- Constructions (1 voxel = 1 bloc du monde) : emprise, hauteur des murs, piliers tous les
-  N blocs (3 dans le moteur), porte 2×3, étage de 45 à 70 % de l'emprise avec rampe,
-  toit plat (moteur) ou à deux pans (conception), étapes de chantier du moteur.
-- Planches PNG : une bibliothèque (ce qui est affiché) ou un biome (coupe du sol + espèces).
-
-5. Performances
-- Réglages › Vérifier les performances : temps de rendu, stockage, modèles les plus lourds.
-- Option « Aperçus allégés » : moins de pixels dans les aperçus 3D, plus fluide.
-
-Tes assets, retouches et biomes modifiés de la V2.5 sont conservés.
+Tes assets et retouches de la V2.6 sont conservés.

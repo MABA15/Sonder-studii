@@ -400,6 +400,43 @@ textarea{background:var(--bg);border:1px solid var(--line);border-radius:var(--r
 .engine-box select{max-width:60%}
 .perf p{margin:6px 0;font-size:14px}
 @media (max-width:699px){ #btnBiomeBoard{padding:0 10px} #bUndo,#bRedo,#spUndo,#spRedo{width:38px} }
+/* REV 2.7 · éditeur de construction */
+.bview.active{display:grid;grid-template-columns:1fr;grid-template-rows:auto 1fr auto;grid-template-areas:"top" "stage" "tools";position:relative;height:100%}
+.bview .ed-top{overflow-x:auto;scrollbar-width:none;flex-wrap:nowrap}
+.bview .ed-top::-webkit-scrollbar{display:none}
+.bview .ed-top>button,.bview .ed-top>.save-state{flex:0 0 auto}
+.bview .ed-top>input{flex:1 0 90px;min-width:90px}
+#bSonderBtn.on{background:var(--sand);color:var(--sand-ink);border-color:var(--sand)}
+.b-tools{gap:6px}
+.b-tools .tool-row.main .tool{flex:1 1 0;min-width:40px}
+.lvl-ctl{display:flex;align-items:center;gap:4px;flex:0 0 auto;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:2px}
+.lvl-ctl span{font-size:13px;min-width:74px;text-align:center;white-space:nowrap}
+.lvl-ctl .icon{min-width:36px;min-height:36px}
+#bOptRow select{flex:0 0 auto;max-width:200px;min-height:40px}
+#bOptRow .opt{flex:0 0 auto}
+.bpalette{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.bmat{position:relative;flex:0 0 auto;width:68px;min-height:74px;padding:4px 2px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10.5px;line-height:1.1}
+.bmat img{width:40px;height:40px;image-rendering:pixelated}
+.bmat span{max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bmat.on{background:var(--sand);color:var(--sand-ink);border-color:var(--sand)}
+.bmat.more b{font-size:22px;height:40px;display:grid;place-items:center}
+.warn-dot{position:absolute;top:2px;right:4px;font-style:normal;font-weight:800;font-size:11px;color:#1a1a1a;background:#d2ad72;border-radius:50%;width:15px;height:15px;display:grid;place-items:center}
+.bcount .warn-dot,.binfo-sec .warn-dot{position:static;display:inline-grid}
+.bmat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:6px;margin:6px 0 10px}
+.bmat-grid .bmat{width:auto}
+.b-info{display:none}
+.binfo-sec{margin-bottom:14px}
+.binfo-sec h3{font-size:15px;margin:0 0 4px}
+.bcount{display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.bcount img{width:28px;height:28px;image-rendering:pixelated}
+.bcount span{flex:1;font-size:13px}
+.bstage{display:flex;justify-content:space-between;font-size:13px;padding:2px 0;color:var(--muted)}
+@media (min-width:900px){
+  .bview.active{grid-template-columns:1fr 290px;grid-template-rows:auto 1fr auto;grid-template-areas:"top top" "stage info" "tools info"}
+  .b-info{display:block;grid-area:info;background:var(--panel);border-left:1px solid var(--line);padding:12px;overflow-y:auto}
+  #bInfoBtn{display:none}
+}
+@media (max-width:699px){ #bSave{display:none} .bview .ed-top .icon{min-width:38px} }
 </style>
 </head>
 <body>
@@ -565,6 +602,38 @@ textarea{background:var(--bg);border:1px solid var(--line);border-radius:var(--r
   </aside>
 </section>
 
+<!-- ÉDITEUR DE CONSTRUCTION (voxels terrain) -->
+<section id="buildView" class="view bview">
+  <div class="ed-top">
+    <button class="icon ghost" id="bBack" aria-label="Retour">←</button>
+    <input id="bName" maxlength="48" aria-label="Nom de la construction">
+    <span class="save-state ok" id="bSave"></span>
+    <button id="bViewBtn" title="Vue de dessus / 3D">Plan</button>
+    <button class="icon" id="bRotL" aria-label="Tourner la vue à gauche">⟲</button>
+    <button class="icon" id="bRotR" aria-label="Tourner la vue à droite">⟳</button>
+    <button class="icon" id="bSonderBtn" aria-label="Afficher le Sonder pour l’échelle" title="Sonder pour l’échelle">🧍</button>
+    <button class="icon" id="bdUndo" aria-label="Annuler" disabled>↶</button>
+    <button class="icon" id="bdRedo" aria-label="Rétablir" disabled>↷</button>
+    <button class="icon" id="bInfoBtn" aria-label="Matières et chantier">ⓘ</button>
+    <button class="icon" id="bMenu" aria-label="Plus d’options">⋯</button>
+  </div>
+  <div class="ed-stage" id="bStage">
+    <canvas id="bCanvas" style="position:absolute;inset:0;width:100%;height:100%;touch-action:none;display:block"></canvas>
+    <div class="stage-hud"><span class="hud-chip" id="bLevel"></span></div>
+    <div class="stage-zoom">
+      <button class="icon" id="bZoomIn" aria-label="Zoomer">+</button>
+      <button class="icon" id="bZoomOut" aria-label="Dézoomer">−</button>
+      <button class="icon" id="bFitBtn" aria-label="Recentrer">⤢</button>
+    </div>
+  </div>
+  <aside class="ed-tools b-tools">
+    <div class="tool-row main" id="bToolRow"></div>
+    <div class="tool-row" id="bOptRow"></div>
+    <div class="bpalette" id="bPalette"></div>
+  </aside>
+  <aside class="b-info" id="bInfo"></aside>
+</section>
+
 <!-- ÉDITEUR DE MODÈLE VOXEL 3D -->
 <section id="modelView" class="view edview">
   <div class="ed-top">
@@ -656,7 +725,7 @@ textarea{background:var(--bg);border:1px solid var(--line);border-radius:var(--r
 <div class="toast hidden" id="toast"></div>
 <script>(() => {
 'use strict';
-const VERSION = '2.6';
+const VERSION = '2.7';
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const CATS = {
   terrain: {label:'Terrain', glyph:'▦', color:'#6f5238', desc:'Blocs voxel : sols, roche, eau', kind:'block'},
@@ -742,6 +811,7 @@ function normalizeAsset(a){
     createdAt:a.createdAt||a.updatedAt||new Date().toISOString(), updatedAt:a.updatedAt||new Date().toISOString(), thumb:a.thumb||null };
   n.type = a.type || (CATS[cat].kind==='block' ? 'block' : CATS[cat].kind==='biome' ? 'biome' : (a.frames||a.faces?.sprite) ? 'sprite' : 'model');
   if(n.type==='block'){ n.faces = { top:a.faces?.top||null, bottom:a.faces?.bottom||null, north:a.faces?.north||a.faces?.side||null, south:a.faces?.south||a.faces?.side||null, east:a.faces?.east||a.faces?.side||null, west:a.faces?.west||a.faces?.side||null, side:a.faces?.side||null }; n.renderMode=a.renderMode||'opaque'; n.variantPlayback=a.variantPlayback||'none'; n.variantFps=a.variantFps||4; n.opacity=a.opacity??.6; n.sideLink=!!a.sideLink; n.variantOrder=a.variantOrder||[]; }
+  else if(n.type==='build'){ n.blocks=Array.isArray(a.blocks)?a.blocks:[]; n.mats=Array.isArray(a.mats)?a.mats:[]; n.stages=a.stages||ENGINE_STAGES.slice(0,4); delete n.size; }
   else if(n.type==='biome'){ n.biome=a.biome||{kind:'surface',key:'b_'+n.id.slice(-8),top:'#6f8f5a',side:'#5a4230',surface:[{mat:'earth',w:100}],layers:[],bedrock:[],pockets:[]}; delete n.size; }
   else if(n.type==='sprite'){ n.frames = a.frames?.length ? a.frames : [a.faces?.sprite||null]; n.fps = a.fps||6; }
   else { n.vpu=a.vpu||10; n.rig=a.rig||CATS[cat].rig||'static'; n.palette=a.palette||[]; n.parts=(a.parts||[]).map(p=>({...p,constraints:p.constraints||{rx:[-180,180],ry:[-180,180],rz:[-180,180]}})); n.genes=a.genes||[]; n.customPoses=a.customPoses||[]; n.sexTraits=a.sexTraits||{maleScale:1.04,femaleScale:1,maleHue:0,femaleHue:0}; n.mutationRate=a.mutationRate??0.06; n.crafting=a.crafting||(cat==='crafting'?{inputs:[],notes:'',mode:'visual'}:null); delete n.size; }
@@ -775,6 +845,7 @@ function drawGround(ctx, blocks, n, W, H){
 /* ================= Vignettes ================= */
 async function makeThumbFromAsset(a){
   if(a.type==='biome') return biomeThumb(a);
+  if(a.type==='build') return buildThumb(a);
   if(a.type==='model') return modelThumb(a);
   if(a.type==='block'){
     const top=await canvasFrom(a.faces.top,a.size), side=await canvasFrom(a.faces.east||a.faces.north||a.faces.side||a.faces.top,a.size);
@@ -789,7 +860,8 @@ function thumbSprite(s){ const c=makeCanvas(128), x=c.getContext('2d'); x.imageS
 let route = {view:'home'};
 function go(r, push=true){
   if(route.view==='editor') leaveEditor();
-  if(r.view==='editor'){ const t=assets.find(x=>x.id===r.id); if(t?.type==='biome') r={view:'biome',biome:t.biome.key}; }
+  if(route.view==='build') leaveBuildEditor();
+  if(r.view==='editor'){ const t=assets.find(x=>x.id===r.id); if(t?.type==='biome') r={view:'biome',biome:t.biome.key}; else if(t?.type==='build') r={view:'build',id:t.id}; }
   route = r;
   if(push) history.pushState(r,'');
   $$('.view').forEach(v=>v.classList.remove('active'));
@@ -800,6 +872,7 @@ function go(r, push=true){
   if(r.view==='biome') renderBiomeView();
   if(r.view==='gen') renderGenerator();
   if(r.view==='species') renderSpecies();
+  if(r.view==='build') openBuildEditor(r.id);
   if(r.view==='editor') isModel ? openModelEditor(r.id) : openEditor(r.id);
 }
 window.addEventListener('popstate', e => { if(!$('#modal').classList.contains('hidden')){ closeModal(null); history.pushState(route,''); return; } go(e.state||{view:'home'}, false); });
@@ -882,7 +955,7 @@ function renderLibrary(){
   const grid=$('#assetGrid'); grid.innerHTML='';
   shown.forEach(a=>{
     const el=document.createElement('div'); el.className='asset'; el.setAttribute('role','button'); el.tabIndex=0;
-    const kindInfo = a.type==='biome' ? (a.biome.kind==='underground'?'Souterrain · conception':`${(a.biome.layers||[]).length} couche${(a.biome.layers||[]).length>1?'s':''} · ${a.builtin?'profil moteur':'profil perso'}`) : a.type==='block' ? `${a.size}×${a.size}` : a.type==='sprite' ? `Sprite ${a.size}×${a.size} · ${a.frames.length} frame${a.frames.length>1?'s':''}` : a.category==='crafting' ? `${a.parts.length} pièce${a.parts.length>1?'s':''} · ⚒ ${(a.crafting?.inputs||[]).length} composant${(a.crafting?.inputs||[]).length>1?'s':''}` : a.eco?.role&&['fauna','flora'].includes(a.category) ? `${a.eco.role}` : `${a.parts.length} pièce${a.parts.length>1?'s':''} · 🧬 ${a.genes.length}`;
+    const kindInfo = a.type==='build' ? `${(a.blocks.length/5)|0} voxels · ${a.mats.length} matière${a.mats.length>1?'s':''}` : a.type==='model'&&a.category==='buildings' ? 'Ancien format (couleurs)' : a.type==='biome' ? (a.biome.kind==='underground'?'Souterrain · conception':`${(a.biome.layers||[]).length} couche${(a.biome.layers||[]).length>1?'s':''} · ${a.builtin?'profil moteur':'profil perso'}`) : a.type==='block' ? `${a.size}×${a.size}` : a.type==='sprite' ? `Sprite ${a.size}×${a.size} · ${a.frames.length} frame${a.frames.length>1?'s':''}` : a.category==='crafting' ? `${a.parts.length} pièce${a.parts.length>1?'s':''} · ⚒ ${(a.crafting?.inputs||[]).length} composant${(a.crafting?.inputs||[]).length>1?'s':''}` : a.eco?.role&&['fauna','flora'].includes(a.category) ? `${a.eco.role}` : `${a.parts.length} pièce${a.parts.length>1?'s':''} · 🧬 ${a.genes.length}`;
     el.innerHTML=`<div class="thumb"><img alt="" src="${a.thumb||''}"></div><div class="meta"><b>${a.fav?'<span class="fav">★</span> ':''}${esc(a.name)}<small>${kindInfo}${isLegacy(a)?' · historique':''}${a.variantOf?' · variante':''}${a.eco?.biomes?.length?' · '+(a.eco.biomes.length===ENGINE_BIOMES.length?'tous biomes':a.eco.biomes.length+' biome'+(a.eco.biomes.length>1?'s':'')):''}${a.builtin?' · origine Sonder':''}</small></b><button class="more" aria-label="Options">⋯</button></div>`;
     el._asset=a; el.onclick=e=>{ if(e.target.closest('.more')) assetMenu(a); else go({view:'editor', id:a.id}); };
     grid.appendChild(el);
@@ -955,11 +1028,13 @@ async function assetMenu(a){
     ${a.type==='model'&&['fauna','agents'].includes(a.category)?'<button data-v="prof"><span>🧠</span>Profil d’espèce</button>':''}
     ${a.category==='agents'?'<button data-v="cmp"><span>⚖</span>Comparer avec le Sonder</button>':''}
     <button data-v="exp"><span>⇪</span>Exporter cet asset</button>
+    ${a.type==='model'&&a.category==='buildings'?'<button data-v="conv"><span>▥</span>Convertir en voxels terrain</button>':''}
     <button data-v="ver"><span>🕘</span>Versions précédentes</button>
     <button data-v="del" class="danger"><span>🗑</span>Mettre à la corbeille</button></div>`);
   const refresh=()=>{ if(route.view==='library') renderLibrary(); else if(route.view==='home') renderHome(); else if(route.view==='biome') renderBiomeView(); };
   if(v==='fav'){ a.fav=!a.fav; await DB.req('assets','readwrite',s=>s.put(a)); toast(a.fav?'Ajouté aux favoris':'Retiré des favoris'); refresh(); }
   if(v==='ver'){ if(await versionsSheet(a)) refresh(); }
+  if(v==='conv'){ const n=await convertToBuild(a,false); toast('Construction convertie (l’ancienne est gardée)'); go({view:'editor',id:n.id}); return; }
   if(v==='edit') go({view:'editor', id:a.id});
   if(v==='prof') go({view:'species',id:a.id});
   if(v==='cmp') compareWithSonder(a);
@@ -1394,6 +1469,7 @@ function validateAsset(a){
   if(!CATS[a.category]) add(errors,`catégorie inconnue « ${a.category} »`);
   if(a.type==='model'&&['fauna','flora'].includes(a.category)&&!a.eco?.biomes?.length&&!a.builtin) add(warnings,'aucun biome dans la fiche écologique');
   if(a.type==='biome'){ if(a.biome.kind!=='underground'&&!(a.biome.surface||[]).length) add(errors,'aucune matière de surface'); if(a.biome.kind==='underground'&&!(a.biome.walls||[]).length) add(warnings,'aucune matière de paroi'); }
+  if(a.type==='build'){ if(!(a.blocks||[]).length) add(warnings,'construction vide'); const unk=(a.mats||[]).filter(id=>!engineMatOf(id)); if(unk.length) add(warnings,`${unk.length} matière(s) inconnue(s) du moteur (${unk.map(matLabel).join(', ')})`); if((a.blocks||[]).some((v,i)=>i%5===3&&(v<0||v>=a.mats.length))) add(errors,'indice de matière invalide'); }
   if(a.type==='block'){
     const f=a.faces||{}; if(!['top','bottom','north','south','east','west','side'].some(k=>!!f[k])) add(errors,'aucune face dessinée');
     if(!f.top) add(warnings,'face Dessus vide');
@@ -1441,6 +1517,7 @@ async function exportAssets(list, label){
     const meta={id:a.id, name:a.name, slug:sl, category:a.category, type:a.type, size:a.size, tags:a.tags||[], variantOf:a.variantOf||null, updatedAt:a.updatedAt};
     if(a.eco) meta.eco=a.eco;
     if(a.type==='biome'){ meta.biome=a.biome; files.push({name:`${base}/biome.json`, data:te.encode(JSON.stringify(biomeJSON(a),null,2))}); }
+    if(a.type==='build'){ meta.build=`${base}/build.json`; meta.preview=`${base}/preview.png`; meta.mats=a.mats; meta.stages=a.stages; delete meta.size; files.push({name:meta.build,data:te.encode(JSON.stringify(buildJSON(a)))}); const pv=makeCanvas(256); await ensureTex(a.mats); drawBuildFit(pv.getContext('2d'),blocksMap(a),{x:0,y:0,w:256,h:256}); files.push({name:meta.preview,data:await canvasBytes(pv)}); if(a.builtin) meta.builtin=a.builtin; }
     if(a.profile) meta.profile=a.profile; if(a.state){ meta.state=a.state; meta.stateOf=a.stateOf; }
     if(a.type==='model'){
       a.parts.forEach(p=>{ if(RT.has(p)) syncVox(p); });
@@ -1466,7 +1543,7 @@ async function exportAssets(list, label){
   }
   files.unshift({name:'studio.json', data:te.encode(JSON.stringify({palette:settings.palette,poseLibrary:settings.poseLibrary||[]},null,2))});
   files.unshift({name:'manifest.json', data:te.encode(JSON.stringify(manifest,null,2))});
-  files.unshift({name:'LISEZ-MOI.txt', data:te.encode(`Export Sonder Asset Studio ${VERSION}\n\nmanifest.json fait foi : il liste chaque asset et ses fichiers.\n- Biomes (biome.json) : surface, couches (épaisseurs min–max en voxels), socle, poches, nappe, mondes ; biomes souterrains (forme, profondeur, remplissage, parois, concrétions, biomes hôtes).\n  Bloc « engine » : ce que le jeu doit remplacer pour ce biome (surface, couches, socle, poches). Avec le patch moteur studio 2.6, copie le dossier biomes/ dans assets/biomes du jeu (ou indique-le dans SONDER_BIOMES_DIR).\n- Profils d’espèces (profile) : tempérament, besoins, régime, vie sociale, reproduction, habitat, relations, décomposition.\n- Constructions : chaque pièce porte son étape de chantier (stage), noms dans stages.\n- Fiches écologiques (eco) : biomes du moteur, rôle, gabarit, taille des groupes, eau.\n- Blocs (terrain) : 6 faces possibles (top/bottom/north/south/east/west), rendu transparent/cutout et mode variantes/animation\n- Modèles voxel (agents, faune, flore, objets, crafting) : model.json (pièces hiérarchiques, pivots, contraintes, poses, palette, mutations) + preview.png\n- Crafting : correspondances visuelles flexibles (assets, noms libres ou tags ; requis/optionnel/alternatives). Cela ne définit aucune recette du moteur.\n- Sprites : frame_000.png… + sheet.png (planche horizontale) et fps\nLes PNG conservent la transparence.\n\nCe fichier sert aussi de sauvegarde : Accueil > Restaurer une sauvegarde.\n`)});
+  files.unshift({name:'LISEZ-MOI.txt', data:te.encode(`Export Sonder Asset Studio ${VERSION}\n\nmanifest.json fait foi : il liste chaque asset et ses fichiers.\n- Biomes (biome.json) : surface, couches (épaisseurs min–max en voxels), socle, poches, nappe, mondes ; biomes souterrains (forme, profondeur, remplissage, parois, concrétions, biomes hôtes).\n  Bloc « engine » : ce que le jeu doit remplacer pour ce biome (surface, couches, socle, poches). Avec le patch moteur studio 2.6, copie le dossier biomes/ dans assets/biomes du jeu (ou indique-le dans SONDER_BIOMES_DIR).\n- Constructions en voxels terrain (build.json) : liste de voxels [x, y, z, matière, étape], matières avec leur équivalent dans le moteur (engine, engineId), étapes et nombre de voxels par matière. 1 voxel = 25 cm.\n- Profils d’espèces (profile) : tempérament, besoins, régime, vie sociale, reproduction, habitat, relations, décomposition.\n- Constructions : chaque pièce porte son étape de chantier (stage), noms dans stages.\n- Fiches écologiques (eco) : biomes du moteur, rôle, gabarit, taille des groupes, eau.\n- Blocs (terrain) : 6 faces possibles (top/bottom/north/south/east/west), rendu transparent/cutout et mode variantes/animation\n- Modèles voxel (agents, faune, flore, objets, crafting) : model.json (pièces hiérarchiques, pivots, contraintes, poses, palette, mutations) + preview.png\n- Crafting : correspondances visuelles flexibles (assets, noms libres ou tags ; requis/optionnel/alternatives). Cela ne définit aucune recette du moteur.\n- Sprites : frame_000.png… + sheet.png (planche horizontale) et fps\nLes PNG conservent la transparence.\n\nCe fichier sert aussi de sauvegarde : Accueil > Restaurer une sauvegarde.\n`)});
   const blob=zipStore(files), date=new Date().toISOString().slice(0,10);
   const name=`Sonder_${slug(label)}_${date}.zip`;
   if(list.length===assets.length){ settings.lastExport=new Date().toISOString(); saveSettings(); }
@@ -1498,9 +1575,10 @@ $('#zipInput').onchange=async e=>{
       if(m.type==='model'&&m.model&&z[m.model]){ const mo=JSON.parse(td.decode(z[m.model])); Object.assign(a,{type:'model', rig:mo.rig, vpu:mo.voxelsPerBlock, palette:mo.palette, genes:mo.genes, parts:mo.parts.map(p=>({id:p.id,name:p.name,role:p.role,parent:p.parent,pivot:p.pivot,constraints:p.constraints||{rx:[-180,180],ry:[-180,180],rz:[-180,180]},vox:p.voxels,stage:p.stage})), customPoses:mo.customPoses||[], sexTraits:mo.sexTraits||{maleScale:1.04,femaleScale:1,maleHue:0,femaleHue:0}, mutationRate:mo.mutationRate??.06, crafting:mo.crafting||m.crafting||null, builtin:m.builtin}); }
       else if(m.type==='block'||(!m.type&&CATS[m.category]?.kind==='block')){ a.faces={top:await url(m.faces?.top),bottom:await url(m.faces?.bottom),north:await url(m.faces?.north||m.faces?.side),south:await url(m.faces?.south||m.faces?.side),east:await url(m.faces?.east||m.faces?.side),west:await url(m.faces?.west||m.faces?.side)};a.renderMode=m.renderMode||'opaque';a.variantPlayback=m.variantPlayback||'none';a.variantFps=m.variantFps||4;a.opacity=m.opacity??.6;a.sideLink=!!m.sideLink;a.variantOrder=m.linkedVariants||[]; }
       else if(m.frames) a.frames=await Promise.all(m.frames.map(url));
-      else if(m.type!=='biome') a.faces={sprite:await url(m.faces?.sprite)}; // format V0.1
+      else if(m.type!=='biome'&&m.type!=='build') a.faces={sprite:await url(m.faces?.sprite)}; // format V0.1
       if(m.eco) a.eco=m.eco;
       if(m.type==='biome'){ a.type='biome'; a.biome=m.biome; }
+      if(m.type==='build'&&m.build&&z[m.build]){ const bj=JSON.parse(td.decode(z[m.build])); a.type='build'; a.mats=bj.materials.map(x=>x.asset); a.blocks=bj.voxels.flat(); a.stages=bj.stages; if(m.builtin) a.builtin=m.builtin; }
       if(m.type==='model'&&m.model&&z[m.model]){ const mo2=JSON.parse(td.decode(z[m.model])); for(const k of ['profile','stages','generator','stateOf','state']) if(mo2[k]) a[k]=mo2[k]; }
       const na=normalizeAsset(a); if(mode==='copy' && assets.some(x=>x.id===na.id)){ na.id=uid(); na.name+=' (restauré)'; }
       na.thumb=await makeThumbFromAsset(na);
@@ -1835,8 +1913,8 @@ function builtinCatalog(){
   TERRAIN_MATS.forEach(([k,n,c],i)=>L.push({key:'mat_'+k,category:'terrain',name:n,tags:['matériau','base'],build:()=>({type:'block',size:16,faces:{top:terrainFace(c,1000+i*77,true),side:terrainFace(c,5000+i*91,false),bottom:terrainFace(c,9000+i*13,false)}})}));
   L.forEach(e=>{ if(/^(fauna_|tree_|plant_)/.test(e.key)&&!e.tags.includes('rendu de secours')) e.tags=[...e.tags.filter(t=>t!=='base'),'rendu de secours']; });
   L.push(...engineCatalogEntries());
-  L.push(...buildingCatalog());
   L.push(...biomeCatalog());
+  L.push(...buildingCatalog());
   return L;
 }
 async function makeBuiltin(entry){
@@ -2295,13 +2373,14 @@ $('#mMenu').onclick=async()=>{
     ${a.category==='crafting'?'<button data-v="craft"><span>⚒</span>Composition visuelle</button>':''}
     ${['fauna','flora','agents'].includes(a.category)?'<button data-v="eco"><span>🌍</span>Fiche écologique et biomes</button>':''}
     ${['fauna','agents'].includes(a.category)?'<button data-v="prof"><span>🧠</span>Profil d’espèce (besoins, social, reproduction, habitat)</button>':''}
-    ${a.category==='buildings'?'<button data-v="stages"><span>▥</span>Noms des étapes de chantier</button>':''}
+    ${a.category==='buildings'?'<button data-v="stages"><span>▥</span>Noms des étapes de chantier</button><button data-v="conv"><span>▥</span>Convertir en voxels terrain</button>':''}
     <button data-v="valid"><span>✓</span>Valider cet asset</button>
     <button data-v="ver"><span>🕘</span>Versions précédentes</button>
     <button data-v="tags"><span>#</span>Tags</button>
     <button data-v="exp"><span>⇪</span>Exporter ce modèle</button><button data-v="voxIn"><span>⇩</span>Importer MagicaVoxel .vox dans la pièce active</button><button data-v="voxOut"><span>⬡</span>Exporter MagicaVoxel .vox</button><button data-v="scene"><span>🏞</span>Mise en scène</button>
     ${a.builtin?'<button data-v="orig"><span>↺</span>Revenir au modèle d’origine de Sonder</button>':''}
     <button data-v="clearall" class="danger"><span>✕</span>Tout effacer</button></div>`);
+  if(v==='conv'){ await mFlush(); const n=await convertToBuild(a,false); toast('Construction convertie (l’ancienne est gardée)'); history.replaceState({view:'editor',id:n.id},''); route={view:'editor',id:n.id}; go({view:'editor',id:n.id},false); return; }
   if(v==='ver'){ await mFlush(); const n=await versionsSheet(a); if(n){ md=null; openModelEditor(n.id); } return; }
   if(v==='eco'){ await mFlush(); await ecoSheet(a); }
   if(v==='prof'){ await mFlush(); go({view:'species',id:a.id}); return; }
@@ -2899,7 +2978,7 @@ function genTexture(type,N,cols,grain,seed,face){
     const o=i*4; d[o]=col[0]; d[o+1]=col[1]; d[o+2]=col[2]; d[o+3]=255; }
   x.putImageData(img,0,0); return c;
 }
-async function generatorSheet(inEditor){
+async function generatorSheet(inEditor,opts){
   let type='grass', grain=.5, all=true, seed=Math.floor(Math.random()*1e9), cols=[...GEN_TYPES.grass.cols], size=inEditor?ed.asset.size:32, name='';
   const prev=s=>{ const cv=s.querySelector('#genPrev'), g=cv.getContext('2d'); g.imageSmoothingEnabled=false; g.clearRect(0,0,cv.width,cv.height);
     const tp=genTexture(type,size,cols,grain,seed,'top'), sd=genTexture(type,size,cols,grain,seed+3,'south'); for(let i=0;i<2;i++) for(let j=0;j<2;j++) g.drawImage(tp,i*64,j*64,64,64);
@@ -2929,7 +3008,7 @@ async function generatorSheet(inEditor){
   const faces={}; for(const k of ['top','bottom',...SIDE_KEYS]) faces[k]=genTexture(type,size,cols,grain,seedFor(k),k).toDataURL('image/png');
   const a=normalizeAsset({id:uid(),name:name.trim()||GEN_TYPES[type].label+' générée',category:'terrain',type:'block',size,tags:['généré',GEN_TYPES[type].label.toLowerCase()],faces,renderMode:type==='water'?'blend':type==='leaves'?'cutout':'opaque'});
   if(type==='water') a.opacity=.6; a.sideLink=true;
-  a.thumb=await makeThumbFromAsset(a); await DB.put(a); assets.push(a); toast('Bloc créé'); go({view:'editor',id:a.id});
+  a.thumb=await makeThumbFromAsset(a); await DB.put(a); assets.push(a); toast('Bloc créé'); if(opts&&opts.stay) return a; go({view:'editor',id:a.id});
 }
 
 /* ================================================================
@@ -3035,11 +3114,13 @@ function renderGenerator(){
   $('#genFrom').onchange=e=>{ gen.from=e.target.value; gen.P=gen.from?{...G.blank(),...G.from(gen.from)}:G.blank(); renderGenerator(); };
   const box=$('#genParams'); box.innerHTML='';
   const row=(label,inner)=>{ const d=document.createElement('div'); d.className='gene-row gen-param'; d.innerHTML=`<span>${label}</span>${inner}`; box.appendChild(d); return d; };
-  const colRow=row('Couleur',`<input type="color" value="${rgbHex(P.col)}" data-col="col"><b></b>`);
+  const colRow=P.col?row('Couleur',`<input type="color" value="${rgbHex(P.col)}" data-col="col"><b></b>`):null;
   (G.colors||[]).forEach(([k,l])=>row(l,`<input type="color" value="${rgbHex(P[k]||[200,200,200])}" data-col="${k}"><b></b>`));
   G.params.forEach(([k,l,lo,hi,st])=>row(l,`<input type="range" min="${lo}" max="${hi}" step="${st}" value="${P[k]??lo}" data-k="${k}"><b>${fmtP(P[k]??lo,st)}</b>`));
   G.choices.forEach(([k,l,opts])=>row(l,`<select data-c="${k}">${opts.map(([v,t])=>`<option value="${v}" ${+P[k]===v?'selected':''}>${t}</option>`).join('')}</select><b></b>`));
   G.flags.forEach(([k,l])=>row(l,`<input type="checkbox" data-f="${k}" ${P[k]?'checked':''}><b></b>`));
+  (G.mats||[]).forEach(([k,l])=>row(l,`<select data-mat="${k}">${matSelectOptions(P[k])}</select><b></b>`));
+  box.querySelectorAll('[data-mat]').forEach(i=>i.onchange=()=>{ P[i.dataset.mat]=i.value; texOf(i.value); genRebuild(); });
   box.querySelectorAll('[data-k]').forEach(i=>i.oninput=()=>{ P[i.dataset.k]=+i.value; i.nextElementSibling.textContent=fmtP(+i.value,+i.step); genRebuild(); });
   box.querySelectorAll('[data-col]').forEach(i=>i.oninput=()=>{ P[i.dataset.col]=hexRgb(i.value); genRebuild(); });
   box.querySelectorAll('[data-c]').forEach(i=>i.onchange=()=>{ P[i.dataset.c]=+i.value; genRebuild(); });
@@ -3052,14 +3133,15 @@ function renderGenerator(){
   const poses=RIGS[G.rig].poses; if(!poses.some(p=>p[0]===gen.pose)) gen.pose='idle';
   $('#genPoses').innerHTML=poses.map(([k,l])=>`<button data-p="${k}" class="${k===gen.pose?'on':''}">${l}</button>`).join('')+`<button data-h="-1" aria-label="Tourner à gauche">⟲</button><button data-h="1" aria-label="Tourner à droite">⟳</button>`;
   $$('#genPoses [data-p]').forEach(b=>b.onclick=()=>{ gen.pose=b.dataset.p; gen.t0=performance.now(); renderGenerator(); });
-  $$('#genPoses [data-h]').forEach(b=>b.onclick=()=>{ gen.heading=(gen.heading+ +b.dataset.h+16)%16; gen.bounds=null; });
+  $$('#genPoses [data-h]').forEach(b=>b.onclick=()=>{ gen.heading=(gen.heading+ (+b.dataset.h)*(GEN_PLANS[gen.plan].family==='building'?4:1)+16)%16; gen.bounds=null; });
   genRebuild(true);
 }
 const fmtP=(v,st)=>st>=1?String(Math.round(v)):(+v).toFixed(2);
 let genTimer=null;
 function genRebuild(now){ clearTimeout(genTimer); const f=()=>{ try{ gen.model=GEN_PLANS[gen.plan].build(gen.P); gen.bounds=null; }catch(e){ console.warn(e); } }; if(now) f(); else genTimer=setTimeout(f,90); }
 (function genLoop(){
-  if(gen&&route.view==='gen'&&gen.model){ const c=$('#genCanvas'), W=c.clientWidth||400, H=c.clientHeight||400, dpr=devDPR();
+  if(gen&&route.view==='gen'&&gen.model&&gen.model.type==='build'){ genDrawBuild(); }
+  else if(gen&&route.view==='gen'&&gen.model){ const c=$('#genCanvas'), W=c.clientWidth||400, H=c.clientHeight||400, dpr=devDPR();
     if(c.width!==Math.round(W*dpr)){ c.width=Math.round(W*dpr); c.height=Math.round(H*dpr); gen.bounds=null; }
     const x=c.getContext('2d'); x.setTransform(dpr,0,0,dpr,0,0); const g=x.createLinearGradient(0,0,0,H); g.addColorStop(0,'#1f2a33'); g.addColorStop(1,'#12151a'); x.fillStyle=g; x.fillRect(0,0,W,H);
     const ref=assets.find(a=>a.id==='builtin_sonder'), pc=camProj({az:Math.PI/4,el:.72});
@@ -3071,12 +3153,13 @@ function genRebuild(now){ clearTimeout(genTimer); const f=()=>{ try{ gen.model=G
   }
   requestAnimationFrame(genLoop);
 })();
-function genHalfWidth(){ let r=.6; const m=gen.model; if(!m) return r; for(const p of m.parts){ const b=partFaces(p).bounds; if(b) r=Math.max(r,Math.abs(b[1])/m.vpu,Math.abs(b[4])/m.vpu,Math.abs(b[0])/m.vpu*.5); } return r; }
+function genHalfWidth(){ let r=.6; const m=gen.model; if(!m||!m.parts) return r; for(const p of m.parts){ const b=partFaces(p).bounds; if(b) r=Math.max(r,Math.abs(b[1])/m.vpu,Math.abs(b[4])/m.vpu,Math.abs(b[0])/m.vpu*.5); } return r; }
 async function genCreate(){
   const name=(gen.name||'').trim(); if(!name){ toast('Donne un nom'); $('#genName').focus(); return; }
   const data=GEN_PLANS[gen.plan].build(gen.P), cat=gen.cat;
   const a=normalizeAsset({id:uid(),name,category:cat,tags:['généré',GEN_PLANS[gen.plan].label.toLowerCase()],...data});
   a.generator={plan:gen.plan,params:JSON.parse(JSON.stringify(gen.P))};
+  if(cat==='buildings'&&data.type==='build'){ const a=await newBuildAsset(name,data,{tags:['généré','voxels terrain'],generator:{plan:gen.plan,params:JSON.parse(JSON.stringify(gen.P))}}); toast(`${name} créé`); const id=a.id; gen=null; history.replaceState({view:'editor',id},''); route={view:'editor',id}; go({view:'editor',id},false); return; }
   if(cat==='flora'||cat==='buildings'){ if(cat==='flora'){ const tree=gen.plan==='tree'; a.eco={biomes:[...gen.biomes],role:tree?'Arbre':'Plante',kind:tree?'tree':'plant',source:'Générateur de flore'}; }
     a.thumb=modelThumb(a); assets.push(a); await DB.put(a); toast(`${name} créé`); const id=a.id; gen=null; history.replaceState({view:'editor',id},''); route={view:'editor',id}; go({view:'editor',id},false); return; }
   const pred=!!gen.P.predator||gen.plan==='arthropod';
@@ -3099,6 +3182,15 @@ async function newFaunaDialog(){
   openGenerator({plan:v,cat:'fauna',biomes:pendingEco?.biomes||[]}); pendingEco=null;
 }
 $('#btnCreatureGen').onclick=()=>openGenerator({plan:'quad',cat:'fauna'});
+
+function genDrawBuild(){ const c=$('#genCanvas'), W=c.clientWidth||400, H=c.clientHeight||400, dpr=devDPR(); if(c.width!==Math.round(W*dpr)){ c.width=Math.round(W*dpr); c.height=Math.round(H*dpr); }
+  const rot=Math.round((gen.heading||0)/4)%4, dk=[rot,W,H,texVer].join('|'); if(gen._bm===gen.model&&gen._dk===dk) return; if(gen._bm!==gen.model){ gen._bm=gen.model; gen._bmap=blocksMap(gen.model); ensureTex(gen.model.mats); } gen._dk=dk;
+  const x=c.getContext('2d'); x.setTransform(dpr,0,0,dpr,0,0); const g=x.createLinearGradient(0,0,0,H); g.addColorStop(0,'#1f2a33'); g.addColorStop(1,'#12151a'); x.fillStyle=g; x.fillRect(0,0,W,H);
+  const pc=buildCam(rot), faces=[]; collectBuildFaces(gen._bmap,pc,{},faces);
+  const s=assets.find(a=>a.id==='builtin_sonder'), b=mapBounds(gen._bmap); if(s) collectFaces(s,{ground:true,offset:[b[0]-3.2,(b[1]+b[4])/2],alpha:.55},pc,faces);
+  let bb=[1e9,1e9,-1e9,-1e9]; for(const f of faces){ const q=f.p||f.pts; for(let i=0;i<8;i+=2){ if(q[i]<bb[0])bb[0]=q[i]; if(q[i+1]<bb[1])bb[1]=q[i+1]; if(q[i]>bb[2])bb[2]=q[i]; if(q[i+1]>bb[3])bb[3]=q[i+1]; } }
+  const zoom=Math.min(W*.88/(bb[2]-bb[0]),H*.88/(bb[3]-bb[1])); drawBuildFaces(x,faces,zoom,W/2-(bb[0]+bb[2])/2*zoom,H/2-(bb[1]+bb[3])/2*zoom);
+  x.fillStyle='rgba(231,227,218,.7)'; x.font='12px system-ui'; x.fillText(`Voxels terrain · 1 voxel = 25 cm · ${(gen.model.blocks.length/5)|0} voxels · Sonder pour l’échelle`,10,H-12); }
 
 /* ================================================================
    REV 2.4 · PROFILS D'ESPÈCES (agents et faune)
@@ -3423,11 +3515,7 @@ function buildingModel(kind){
   walls(u,uo,7,11,7,'murs_haut','Murs d’étage',C.mur2,upts,(x,y,z)=>x===uo&&(y===2||y===3)&&z<=9);
   return m.done({rig:'static',genes:[],stages:ENGINE_STAGES});
 }
-function buildingCatalog(){ return [
-  {key:'bt_nid',category:'buildings',name:'Nid nivelé 5×5',tags:['construction moteur','nivellement'],build:()=>buildingModel('nid')},
-  {key:'bt_abri',category:'buildings',name:'Abri à piliers',tags:['construction moteur','fondations'],build:()=>buildingModel('abri')},
-  {key:'bt_maison',category:'buildings',name:'Maison murée',tags:['construction moteur','murs'],build:()=>buildingModel('maison')},
-  {key:'bt_etage',category:'buildings',name:'Maison à étage',tags:['construction moteur','étage'],build:()=>buildingModel('etage')}]; }
+// buildingCatalog : voir build27.js (constructions en voxels terrain)
 
 /* ================================================================
    REV 2.4 · RÉSEAU ALIMENTAIRE ET RELATIONS
@@ -3533,6 +3621,7 @@ const VX={ // voxel.Catalog : [nom, base, accent]
   tuff:['Tuf volcanique',[130,112,83],[176,149,105]], pumice:['Pierre ponce',[166,157,135],[215,205,177]], obsidian:['Obsidienne',[27,29,36],[91,74,112]],
   water:['Eau',[31,103,151],[69,164,199]], ice:['Glace',[130,184,205],[207,232,237]], snow:['Neige',[220,226,224],[249,249,244]],
   ash:['Cendre',[82,80,77],[135,132,125]], scoria:['Scories',[91,49,39],[154,69,44]], salt:['Sel',[211,205,190],[247,241,220]],
+  wood:['Bois extrait',[116,76,40],[181,126,67]],
   lava:['Lave (conception)',[214,86,28],[255,176,64]]
 };
 const SURFACE_TOKEN='surface', BED_TOKEN='socle';
@@ -3672,7 +3761,7 @@ function biomeThumb(a){ const c=makeCanvas(128), x=c.getContext('2d'); try{ draw
 let soilTimer=null;
 function soilSave(a){ clearTimeout(soilTimer); soilTimer=setTimeout(async()=>{ a.updatedAt=new Date().toISOString(); a.thumb=biomeThumb(a); undoPush('b:'+a.id,JSON.stringify(a.biome)); await DB.put(a); refreshBiomeList(); },600); drawSoilCanvas(a); renderEngineStatus(a); }
 function matOptions(sel,extra=[]){ const custom=assets.filter(a=>a.type==='block'&&!a.builtin);
-  return [...extra.map(([k,l])=>`<option value="${k}" ${k===sel?'selected':''}>${l}</option>`),`<optgroup label="Matières du moteur">${Object.entries(VX).map(([k,v])=>`<option value="${k}" ${k===sel?'selected':''}>${v[0]}</option>`).join('')}</optgroup>`,
+  return [...extra.map(([k,l])=>`<option value="${k}" ${k===sel?'selected':''}>${l}</option>`),`<optgroup label="Matières du moteur">${Object.entries(VX).filter(([k])=>k!=='wood').map(([k,v])=>`<option value="${k}" ${k===sel?'selected':''}>${v[0]}</option>`).join('')}</optgroup>`,
     custom.length?`<optgroup label="Tes blocs">${custom.map(c=>`<option value="${c.id}" ${c.id===sel?'selected':''}>${esc(c.name)}</option>`).join('')}</optgroup>`:''].join(''); }
 function swatch(k){ if(k===SURFACE_TOKEN||k===BED_TOKEN) return `<i class="mat-sw sw-token">${k===SURFACE_TOKEN?'S':'R'}</i>`; const c=matColors(k); return `<i class="mat-sw" style="background:linear-gradient(135deg,${c[0]},${c[2]})"></i>`; }
 function renderSoilEditor(a){
@@ -3771,6 +3860,7 @@ function biomeCatalog(){
   for(const k of CAVE_KEYS){ const p=cavePreset(k); L.push({key:'bu_'+k,category:'biomes',name:p.name,tags:['souterrain','conception'],type:'biome',build:()=>{ const d=cavePreset(k); delete d.name; return {type:'biome',biome:d}; }}); }
   // Matières voxel du monde actuel absentes de la bibliothèque Terrain
   for(const k of Object.keys(VX).filter(k=>k!=='lava')){ const [n,base,acc]=VX[k], mix=c=>c.map((v,i)=>(v+acc[i])/2);
+    if(k==='wood'){ L.push({key:'vx_wood',category:'terrain',name:n,tags:['matériau voxel','construction'],build:()=>({type:'block',size:16,renderMode:'opaque',sideLink:true,faces:{top:woodFace(7,true),bottom:woodFace(11,true),north:woodFace(3,false),south:woodFace(5,false),east:woodFace(9,false),west:woodFace(13,false)}})}); continue; }
     L.push({key:'vx_'+k,category:'terrain',name:n,tags:['matériau voxel'],build:()=>({type:'block',size:16,renderMode:k==='water'?'blend':'opaque',opacity:.65,sideLink:true,faces:{top:terrainFace(mix(base),2000+k.length*131,true),bottom:terrainFace(base,4000+k.length*17,false),north:terrainFace(base,6000+k.length*57,false),south:terrainFace(base,6000+k.length*57,false),east:terrainFace(base,6000+k.length*57,false),west:terrainFace(base,6000+k.length*57,false)}})}); }
   // Vivant des cavernes (conception)
   const cave=['ug_caverne','ug_lac','ug_riviere','ug_gouffre'];
@@ -4067,7 +4157,7 @@ async function exportBoard(list,title,opts={}){
   if(opts.hero){ x.save(); x.translate(pad,head+10); opts.hero(x,W-pad*2,heroH-20); x.restore(); }
   for(let i=0;i<list.length;i++){ const a=list[i], cx=pad+(i%cols)*cw+ (W-pad*2-cols*cw)/2, cy=head+heroH+Math.floor(i/cols)*ch+10;
     x.fillStyle='#1d2229'; x.beginPath(); x.roundRect?x.roundRect(cx+6,cy,cw-12,ch-14,12):x.rect(cx+6,cy,cw-12,ch-14); x.fill();
-    try{ if(a.type==='model') renderModelFit(x,a,{x:cx+10,y:cy+4,w:cw-20,h:cw-24},{heading:0}); else if(a.type==='biome') drawSection((()=>{ x.save(); x.translate(cx+10,cy+4); return x; })(),cw-20,cw-24,a.biome,{N:10}); else if(a.thumb){ const im=await loadImg(a.thumb); x.imageSmoothingEnabled=false; x.drawImage(im,cx+20,cy+14,cw-40,cw-40); } }catch(e){ console.warn(e); }
+    try{ if(a.type==='model') renderModelFit(x,a,{x:cx+10,y:cy+4,w:cw-20,h:cw-24},{heading:0}); else if(a.type==='build'){ await ensureTex(a.mats); drawBuildFit(x,blocksMap(a),{x:cx+10,y:cy+4,w:cw-20,h:cw-24}); } else if(a.type==='biome') drawSection((()=>{ x.save(); x.translate(cx+10,cy+4); return x; })(),cw-20,cw-24,a.biome,{N:10}); else if(a.thumb){ const im=await loadImg(a.thumb); x.imageSmoothingEnabled=false; x.drawImage(im,cx+20,cy+14,cw-40,cw-40); } }catch(e){ console.warn(e); }
     if(a.type==='biome') x.restore();
     x.fillStyle='#e7e3da'; x.font='bold 14px system-ui'; x.textAlign='center'; const nm=a.name.length>26?a.name.slice(0,25)+'…':a.name; x.fillText(nm,cx+cw/2,cy+ch-40);
     x.fillStyle='#98a0a8'; x.font='12px system-ui'; const sub=a.eco?.role||CATS[a.category]?.label||''; x.fillText(sub,cx+cw/2,cy+ch-22); x.textAlign='left'; }
@@ -4109,13 +4199,372 @@ $('#btnGenerators').onclick=()=>generatorsMenu();
 $('#btnTrash').onclick=()=>trashSheet();
 $('#homeSearch').oninput=()=>homeSearch();
 
+/* ================================================================
+   REV 2.7 · CONSTRUCTIONS EN VOXELS TERRAIN
+   Une construction = des voxels du monde (1 cube = 1 voxel = 25 cm),
+   chacun fait d'un bloc de la bibliothèque Terrain. Pas de couleurs :
+   l'apparence vient du bloc. Même caméra que le jeu (render/iso.go).
+   ================================================================ */
+const ENGINE_IDS={topsoil:1,earth:2,organic:3,peat:4,silt:5,clay:6,sand:7,gravel:8,scree:9,limestone:10,sandstone:11,shale:12,quartz:13,granite:14,basalt:15,tuff:16,pumice:17,obsidian:18,wood:19,water:20,ice:21,snow:22,ash:23,scoria:24,salt:25};
+const LEGACY_MAT_ENGINE={topsoil:'topsoil',subsoil:'earth',clay:'clay',sand:'sand',gravel:'gravel',silt:'silt',organic:'organic',peat:'peat',snow:'snow',ice:'ice',limestone:'limestone',shale:'shale',granite:'granite',basalt:'basalt'};
+const VXID=k=>'builtin_vx_'+k;
+function engineMatOf(id){ const a=assets.find(x=>x.id===id)||trash.find(x=>x.id===id); const k=a?.builtin?.key||String(id).replace(/^builtin_/,'');
+  if(k.startsWith('vx_')) return ENGINE_IDS[k.slice(3)]?k.slice(3):null; if(k.startsWith('mat_')) return LEGACY_MAT_ENGINE[k.slice(4)]||null; return null; }
+function matLabel(id){ const a=assets.find(x=>x.id===id); if(a) return a.name; const k=engineMatOf(id); return k&&VX[k]?VX[k][0]:'Bloc supprimé'; }
+// Texture « bois extrait » : planches (comme la matière du moteur, 116,76,40 → 181,126,67)
+function woodFace(seed,top){ const c=makeCanvas(16), x=c.getContext('2d'); let s=seed>>>0; const rnd=()=>{ s^=s<<13; s>>>=0; s^=s>>17; s^=s<<5; s>>>=0; return s/4294967296; };
+  const A=[116,76,40], B=[181,126,67];
+  for(let j=0;j<16;j++){ const plank=Math.floor(j/4), t=.35+.4*((plank*37+seed)%5)/5; for(let i=0;i<16;i++){ const n=.9+rnd()*.14, edge=j%4===3?.72:1, knot=((i+plank*5)%11===0&&j%4===1)?.8:1; x.fillStyle=rgbHex(A.map((v,k)=>(v+(B[k]-v)*t)*n*edge*knot)); x.fillRect(top?j:i,top?i:j,1,1); } }
+  return c.toDataURL('image/png'); }
+
+/* ----- Textures des blocs terrain ----- */
+const TEX=new Map(); let texWaiters=[], texVer=0;
+function texAvg(a,id){ const k=engineMatOf(id); if(k&&VX[k]) return VX[k][1].map((v,i)=>(v+VX[k][2][i])/2); return a?._avg||[128,128,128]; }
+function texOf(id){
+  const a=assets.find(x=>x.id===id), key=id+'|'+(a?.updatedAt||'none'); let t=TEX.get(id); if(t&&t.key===key) return t;
+  t={id,key,avg:texAvg(a,id),img:{},alpha:a?.renderMode==='blend'?(a.opacity??.6):1,pending:0,missing:!a};
+  if(a){ const f=a.faces||{}, side=f.side||f.north||f.east||f.south||f.west||f.top; const src={top:f.top||side,px:f.east||side,nx:f.west||side,py:f.north||side,ny:f.south||side};
+    const cache={}; for(const [k,u] of Object.entries(src)){ if(!u) continue; if(!cache[u]){ const im=new Image(); t.pending++; im.onload=im.onerror=()=>{ t.pending--; if(!t.pending){ const w=texWaiters; texWaiters=[]; w.forEach(f=>f()); texVer++; if(!a._avg&&!engineMatOf(id)){ customMatColor(a).then(c=>{ t.avg=c; }); } bRedraw(); } }; im.src=u; cache[u]=im; } t.img[k]=cache[u]; } }
+  TEX.set(id,t); return t; }
+function ensureTex(ids){ const L=[...new Set(ids)].map(texOf); if(L.every(t=>!t.pending)) return Promise.resolve(); return new Promise(r=>{ texWaiters.push(()=>{ if(L.every(t=>!t.pending)) r(); else texWaiters.push(r); }); setTimeout(r,1500); }); }
+
+/* ----- Données ----- */
+function blocksMap(a){ const m=new Map(), b=a.blocks||[]; for(let i=0;i+4<b.length;i+=5) m.set(KEY(b[i],b[i+1],b[i+2]),[a.mats[b[i+3]],b[i+4]|0]); return m; }
+function mapToArrays(map){ const mats=[], idx={}, blocks=[]; const keys=[...map.keys()].sort((p,q)=>{ const A=DEC(p),B=DEC(q); return A[2]-B[2]||A[1]-B[1]||A[0]-B[0]; });
+  for(const k of keys){ const [x,y,z]=DEC(k), v=map.get(k); if(idx[v[0]]==null){ idx[v[0]]=mats.length; mats.push(v[0]); } blocks.push(x,y,z,idx[v[0]],v[1]|0); } return {blocks,mats}; }
+function mapBounds(map){ let b=[1e9,1e9,1e9,-1e9,-1e9,-1e9]; for(const k of map.keys()){ const d=DEC(k); for(let i=0;i<3;i++){ if(d[i]<b[i]) b[i]=d[i]; if(d[i]>b[i+3]) b[i+3]=d[i]; } } return map.size?b:[0,0,0,-1,-1,-1]; }
+function buildCounts(map){ const c=new Map(); for(const v of map.values()) c.set(v[0],(c.get(v[0])||0)+1); return [...c.entries()].sort((p,q)=>q[1]-p[1]); }
+
+/* ----- Rendu (faces texturées, tri en profondeur comme drawFaces) ----- */
+function buildCam(k){ return camProj({az:Math.PI/4+k*Math.PI/2,el:.72}); }
+function collectBuildFaces(map,pc,o,out){
+  const sx=pc.sn>0?1:-1, sy=pc.cs>0?1:-1, cut=o.cut, ms=o.maxStage;
+  const vis=(z,v)=>(ms==null||v[1]<=ms)&&(cut==null||z<=cut);
+  const solid=k=>{ const q=map.get(k); if(!q) return false; const z=DEC(k)[2]; return vis(z,q)&&texOf(q[0]).alpha>=1; };
+  const P=(x,y,z)=>projRaw(pc,x,y,z);
+  for(const [k,v] of map){ const [x,y,z]=DEC(k); if(!vis(z,v)) continue; const T=texOf(v[0]);
+    const push=(face,a,b,c,shade)=>{ const d=P(b[0]+c[0]-a[0],b[1]+c[1]-a[1],b[2]+c[2]-a[2]); const pa=P(...a),pb=P(...b),pc2=P(...c); out.push({tex:T,face,p:[pa[0],pa[1],pb[0],pb[1],pc2[0],pc2[1],d[0],d[1]],dep:(pa[2]+pb[2]+pc2[2]+d[2])/4+(face==='top'?.001:0),shade,bz:z,al:o.alpha??1,gk:k}); };
+    if(!solid(KEY(x,y,z+1))) push('top',[x,y,z+1],[x+1,y,z+1],[x,y+1,z+1],0);
+    if(!solid(KEY(x+sx,y,z))){ const X=sx>0?x+1:x; push(sx>0?'px':'nx',[X,sx>0?y:y+1,z+1],[X,sx>0?y+1:y,z+1],[X,sx>0?y:y+1,z],.18); }
+    if(!solid(KEY(x,y+sy,z))){ const Y=sy>0?y+1:y; push(sy>0?'py':'ny',[sy>0?x+1:x,Y,z+1],[sy>0?x:x+1,Y,z+1],[sy>0?x+1:x,Y,z],.34); }
+  }
+}
+function quadPath(ctx,s){ ctx.beginPath(); ctx.moveTo(s[0],s[1]); ctx.lineTo(s[2],s[3]); ctx.lineTo(s[6],s[7]); ctx.lineTo(s[4],s[5]); ctx.closePath(); }
+function drawBuildFaces(ctx,faces,zoom,ox,oy){
+  faces.sort((p,q)=>p.dep-q.dep); ctx.imageSmoothingEnabled=false; ctx.lineJoin='round';
+  for(const f of faces){
+    if(f.pts){ const s=f.pts, sp=[]; for(let i=0;i<8;i+=2) sp.push(ox+s[i]*zoom,oy+s[i+1]*zoom); ctx.globalAlpha=1; const c=`rgba(${f.r|0},${f.g|0},${f.b|0},${f.al})`; ctx.fillStyle=c; ctx.beginPath(); ctx.moveTo(sp[0],sp[1]); ctx.lineTo(sp[2],sp[3]); ctx.lineTo(sp[4],sp[5]); ctx.lineTo(sp[6],sp[7]); ctx.closePath(); ctx.fill(); continue; }
+    const q=f.p, s=[]; for(let i=0;i<8;i+=2) s.push(ox+q[i]*zoom,oy+q[i+1]*zoom); f.sp=s;
+    const T=f.tex, a=(f.al??1)*T.alpha, base=T.avg.map(v=>v*(1-f.shade));
+    ctx.globalAlpha=a; ctx.fillStyle=f.tint||rgbHex(base); ctx.strokeStyle=ctx.fillStyle; ctx.lineWidth=.8; quadPath(ctx,s); ctx.fill(); if(a>=1) ctx.stroke();
+    const im=f.tint?null:T.img[f.face];
+    if(im&&im.complete&&im.naturalWidth){ ctx.save(); ctx.transform((s[2]-s[0])/im.naturalWidth,(s[3]-s[1])/im.naturalWidth,(s[4]-s[0])/im.naturalHeight,(s[5]-s[1])/im.naturalHeight,s[0],s[1]); ctx.drawImage(im,0,0); ctx.restore();
+      if(f.shade){ ctx.fillStyle=`rgba(0,0,0,${f.shade})`; quadPath(ctx,s); ctx.fill(); } }
+  }
+  ctx.globalAlpha=1;
+}
+function drawBuildFit(ctx,map,box,o={}){ const pc=buildCam(o.rot||0), faces=[]; collectBuildFaces(map,pc,o,faces); if(!faces.length) return null;
+  let b=[1e9,1e9,-1e9,-1e9]; for(const f of faces) for(let i=0;i<8;i+=2){ const x=f.p[i],y=f.p[i+1]; if(x<b[0])b[0]=x; if(y<b[1])b[1]=y; if(x>b[2])b[2]=x; if(y>b[3])b[3]=y; }
+  const bw=b[2]-b[0]||1, bh=b[3]-b[1]||1, zoom=Math.min(box.w*(o.pad||.86)/bw,box.h*(o.pad||.86)/bh);
+  drawBuildFaces(ctx,faces,zoom,box.x+box.w/2-(b[0]+bw/2)*zoom,box.y+box.h/2-(b[1]+bh/2)*zoom); return b; }
+async function buildThumb(a,size=128){ const map=blocksMap(a); await ensureTex([...map.values()].map(v=>v[0])); const c=makeCanvas(size), x=c.getContext('2d');
+  if(!map.size){ x.fillStyle='#2a3038'; x.font=`${size/5}px system-ui`; x.textAlign='center'; x.fillText('▥',size/2,size/2+size/14); } else drawBuildFit(x,map,{x:0,y:0,w:size,h:size}); return c.toDataURL('image/png'); }
+
+/* ----- Constructions du moteur et générateur (en voxels terrain) ----- */
+// Matières par défaut : le terrain nivelé est de la terre ; piliers, toit et rampe en bois extrait ;
+// murs en terre (dans le jeu, les Sonders murent avec les voxels qu'ils portent). Tout est modifiable.
+function buildBuildingB(P){
+  const map=new Map(), W=Math.round(P.w), D=Math.round(P.d), wh=Math.round(P.wallH), sp=Math.max(2,Math.round(P.pillarSp));
+  const M={sol:P.floorMat||VXID('earth'),bois:P.woodMat||VXID('wood'),toit:P.roofMat||VXID('wood'),mur:P.wallMat||VXID('earth'),mur2:P.upperMat||P.wallMat||VXID('clay'),rampe:P.rampMat||VXID('gravel')};
+  const set=(x,y,z,m,s)=>map.set(KEY(x,y,z),[m,s]);
+  const posts=(w,d,o)=>{ const L=[], xs=[], ys=[]; for(let i=0;i<w;i+=sp) xs.push(i); if(xs[xs.length-1]!==w-1) xs.push(w-1); for(let j=0;j<d;j+=sp) ys.push(j); if(ys[ys.length-1]!==d-1) ys.push(d-1);
+    for(const i of xs) for(const j of ys) if(i===0||j===0||i===w-1||j===d-1) L.push([i+o[0],j+o[1]]); return L; };
+  const roof=(w,d,o,z,stage)=>{ if(+P.roofType===1){ const half=Math.ceil(d/2); for(let k=0;k<half;k++) for(let i=-1;i<=w;i++){ set(i+o[0],k+o[1],z+k,M.toit,stage); set(i+o[0],d-1-k+o[1],z+k,M.toit,stage); } for(const i of [0,w-1]) for(let k=1;k<half;k++) for(let j=k;j<d-k;j++) set(i+o[0],j+o[1],z+k-1,M.mur,stage); }
+    else for(let i=0;i<w;i++) for(let j=0;j<d;j++) set(i+o[0],j+o[1],z,M.toit,stage); };
+  const walls=(w,d,o,z0,z1,stage,m,skip,door)=>{ for(let i=0;i<w;i++) for(let j=0;j<d;j++){ if(i>0&&j>0&&i<w-1&&j<d-1) continue; const x=i+o[0], y=j+o[1]; if(skip.some(s=>s[0]===x&&s[1]===y)) continue; for(let z=z0;z<=z1;z++){ if(door&&door(x,y,z)) continue; set(x,y,z,m,stage); } } };
+  for(let i=0;i<W;i++) for(let j=0;j<D;j++) set(i,j,0,M.sol,0);
+  let top=0;
+  if(P.pillars!==false){ const pts=posts(W,D,[0,0]); for(const [x,y] of pts) for(let z=1;z<=wh;z++) set(x,y,z,M.bois,1);
+    roof(W,D,[0,0],wh+1,2); top=2;
+    if(P.walls){ const dx=Math.max(0,Math.floor(W/2)-1), door=P.door!==false?(x,y,z)=>y===0&&(x===dx||x===dx+1)&&z<=3:null; walls(W,D,[0,0],1,wh,3,M.mur,pts,door); top=3; }
+    const pct=+P.upper||0;
+    if(pct>=45&&+P.roofType!==1){ const uw=Math.max(3,Math.round(W*pct/100)), ud=Math.max(3,Math.round(D*pct/100)), o=[Math.floor((W-uw)/2),Math.floor((D-ud)/2)], z0=wh+2, uh=Math.max(3,wh-1);
+      if(P.ramp!==false){ for(let y=0;y<z0;y++) for(let z=1;z<=Math.min(y+1,z0-1);z++) set(-1,y,z,M.rampe,4); }
+      const up=posts(uw,ud,o); for(const [x,y] of up) for(let z=z0;z<z0+uh;z++) set(x,y,z,M.bois,5);
+      roof(uw,ud,o,z0+uh,6);
+      if(P.walls) walls(uw,ud,o,z0,z0+uh-1,7,M.mur2,up,(x,y,z)=>x===o[0]&&(y===o[1]+Math.floor(ud/2)-1||y===o[1]+Math.floor(ud/2))&&z<z0+3);
+      top=P.walls?7:6; } }
+  const {blocks,mats}=mapToArrays(map); return {type:'build',blocks,mats,stages:ENGINE_STAGES.slice(0,top+1)};
+}
+const BUILD_PRESETS={nid:{w:5,d:5,pillars:false},abri:{w:5,d:5,wallH:5,pillarSp:4,walls:false},maison:{w:7,d:7,wallH:5,pillarSp:3,walls:true},etage:{w:7,d:7,wallH:5,pillarSp:3,walls:true,upper:70,ramp:true},halle:{w:13,d:9,wallH:6,pillarSp:3,walls:true,upper:0}};
+const BUILD_BLANK=()=>({w:7,d:7,wallH:5,pillarSp:3,upper:0,roofType:0,pillars:true,walls:true,door:true,ramp:true,floorMat:VXID('earth'),woodMat:VXID('wood'),roofMat:VXID('wood'),wallMat:VXID('earth'),upperMat:VXID('clay'),rampMat:VXID('gravel')});
+function buildingCatalog(){ const E=(key,name,tags,preset)=>({key,category:'buildings',name,tags:['construction moteur',...tags],build:()=>buildBuildingB({...BUILD_BLANK(),...BUILD_PRESETS[preset]})});
+  return [E('bt_nid','Nid nivelé 5×5',['nivellement'],'nid'),E('bt_abri','Abri à piliers',['fondations'],'abri'),E('bt_maison','Maison murée',['murs'],'maison'),E('bt_etage','Maison à étage',['étage'],'etage')]; }
+GEN_PLANS.building={label:'Construction',family:'building',rig:'static',cats:['buildings'],colors:[],
+  mats:[['wallMat','Murs'],['woodMat','Piliers'],['roofMat','Toit'],['floorMat','Sol nivelé'],['upperMat','Murs d’étage'],['rampMat','Rampe']],
+  params:[['w','Largeur (voxels)',3,21,1],['d','Profondeur (voxels)',3,21,1],['wallH','Hauteur des murs',2,9,1],['pillarSp','Écart des piliers',2,6,1],['upper','Étage (% de l’emprise, 0 = aucun)',0,70,5]],
+  choices:[['roofType','Toit',[[0,'Plat (moteur)'],[1,'À deux pans (conception)']]]],flags:[['pillars','Piliers et toit'],['walls','Murs'],['door','Porte 2×3'],['ramp','Rampe vers l’étage']],
+  presets:()=>[['nid','Nid nivelé 5×5'],['abri','Abri à piliers'],['maison','Maison murée'],['etage','Maison à étage'],['halle','Grande halle']],
+  from:k=>({...BUILD_PRESETS[k]}), blank:BUILD_BLANK, build:P=>buildBuildingB({...BUILD_BLANK(),...P})};
+function terrainPalette(all){ const eng=Object.keys(ENGINE_IDS).map(k=>assets.find(a=>a.id===VXID(k))).filter(Boolean);
+  const mine=assets.filter(a=>a.category==='terrain'&&!a.builtin), legacy=assets.filter(a=>a.category==='terrain'&&a.builtin&&!a.id.startsWith('builtin_vx_'));
+  return {eng,mine,legacy:(all||settings.showLegacy)?legacy:legacy.filter(a=>!isLegacy(a))}; }
+function matSelectOptions(sel){ const P=terrainPalette(true); const o=(a)=>`<option value="${a.id}" ${a.id===sel?'selected':''}>${esc(a.name)}</option>`;
+  return `<optgroup label="Matières du jeu">${P.eng.map(o).join('')}</optgroup>${P.mine.length?`<optgroup label="Tes blocs">${P.mine.map(o).join('')}</optgroup>`:''}${P.legacy.length?`<optgroup label="Historique">${P.legacy.map(o).join('')}</optgroup>`:''}`; }
+// Conversion d'une ancienne construction (modèle coloré) en voxels terrain : couleur la plus proche.
+function modelToBuild(a){ const cands=Object.keys(ENGINE_IDS).filter(k=>k!=='water'&&VX[k]&&assets.some(x=>x.id===VXID(k))).map(k=>[VXID(k),VX[k][1].map((v,i)=>(v+VX[k][2][i])/2)]);
+  const near=hex=>{ const c=hexRgb(hex); let best=cands[0][0], bld=1e9; for(const [id,m] of cands){ const d=(c[0]-m[0])**2+(c[1]-m[1])**2+(c[2]-m[2])**2; if(d<bld){ bld=d; best=id; } } return best; };
+  const map=new Map(), v=a.vpu||1; for(const p of a.parts||[]){ if(RT.has(p)) syncVox(p); const q=p.vox||[]; for(let i=0;i+3<q.length;i+=4) map.set(KEY(Math.floor(q[i]/v),Math.floor(q[i+1]/v),Math.floor(q[i+2]/v)),[near(a.palette[q[i+3]]||'#888888'),p.stage??0]); }
+  const b=mapBounds(map); if(b[2]!==0&&map.size){ const m2=new Map(); for(const [k,val] of map){ const d=DEC(k); m2.set(KEY(d[0],d[1],d[2]-b[2]),val); } return {type:'build',...mapToArrays(m2),stages:a.stages||ENGINE_STAGES.slice(0,Math.max(0,...[...map.values()].map(x=>x[1]))+1)}; }
+  return {type:'build',...mapToArrays(map),stages:a.stages||ENGINE_STAGES.slice(0,4)}; }
+async function convertToBuild(a,replace){ const d=modelToBuild(a); let n;
+  if(replace){ await versionBefore(a,true); n=normalizeAsset({...a,...d,type:'build'}); n.updatedAt=new Date().toISOString(); const i=assets.findIndex(x=>x.id===a.id); assets[i]=n; }
+  else { n=normalizeAsset({id:uid(),name:a.name+' (blocs terrain)',category:'buildings',tags:[...(a.tags||[])],...d,variantOf:a.id}); assets.push(n); }
+  n.thumb=await buildThumb(n); await DB.put(n); return n; }
+async function newBuildAsset(name,data,extra={}){ const a=normalizeAsset({id:uid(),name,category:'buildings',type:'build',tags:['voxels terrain'],...data,...extra}); a.thumb=await buildThumb(a); assets.push(a); await DB.put(a); return a; }
+async function newBuildingDialog(){
+  const builds=assets.filter(a=>a.type==='build');
+  const v=await sheet(`<h3>Nouvelle construction</h3><p class="muted">Faite de voxels du monde (1 cube = 25 cm) pris dans ta bibliothèque Terrain.</p><div class="menu-list">
+    <button data-v="empty"><span>▥</span><div><b>Construction vide</b><br><small class="muted">Poser les voxels un par un, en murs ou en rectangles</small></div></button>
+    <button data-v="gen"><span>⚙</span><div><b>Générateur</b><br><small class="muted">Emprise, piliers tous les 3 voxels, porte 2×3, étage, étapes du chantier</small></div></button>
+    ${builds.length?'<button data-v="copy"><span>⧉</span><div><b>Copie d’une construction</b></div></button>':''}</div>`);
+  if(!v) return; if(v==='gen') return openGenerator({plan:'building',cat:'buildings'});
+  let data={type:'build',blocks:[],mats:[],stages:ENGINE_STAGES.slice(0,4)}, name='Nouvelle construction';
+  if(v==='copy'){ const s=await sheet(`<h3>Copier…</h3><div class="menu-list">${builds.map(b=>`<button data-v="${b.id}"><img class="ver-img" alt="" src="${b.thumb||''}">${esc(b.name)}</button>`).join('')}</div>`); if(!s) return; const src=assets.find(x=>x.id===s); data={type:'build',blocks:[...src.blocks],mats:[...src.mats],stages:[...(src.stages||[])]}; name=src.name+' (copie)'; }
+  const n=await askText('Nom de la construction',name,'Créer'); if(!n) return;
+  const a=await newBuildAsset(n,data,v==='copy'?{variantOf:assets.find(x=>x.name===name.replace(/ \(copie\)$/,''))?.id||null}:{}); go({view:'editor',id:a.id});
+}
+
+/* ----- Éditeur de construction ----- */
+let bld=null; // état
+const B_TOOLS=[{id:'add',icon:'＋',label:'Poser'},{id:'del',icon:'－',label:'Retirer'},{id:'rect',icon:'▭',label:'Rectangle'},{id:'line',icon:'╱',label:'Mur'},{id:'paint',icon:'◩',label:'Repeindre'},{id:'pick',icon:'⌾',label:'Pipette'},{id:'stage',icon:'▥',label:'Étape'},{id:'pan',icon:'✥',label:'Déplacer'}];
+function openBuildEditor(id){
+  const a=assets.find(x=>x.id===id); if(!a) return go({view:'home'},false);
+  const map=blocksMap(a), b=mapBounds(map);
+  bld={asset:a,map,hist:[],redo:[],tool:bld?.tool||'add',mat:bld?.mat&&assets.some(x=>x.id===bld.mat)?bld.mat:(a.mats[0]&&assets.some(x=>x.id===a.mats[0])?a.mats[0]:VXID('earth')),stage:bld?.stage??Math.min(3,(a.stages||ENGINE_STAGES).length-1),
+    level:map.size?Math.min(b[5]+1,60):0,height:bld?.height||3,outline:bld?.outline??true,erase:false,rot:0,plan:false,sonder:true,showAbove:false,maxStage:null,cam:null,dirty:false,preview:null};
+  $('#bName').value=a.name; bSetSave('ok'); ensureTex([...map.values()].map(v=>v[0]).concat(bld.mat)).then(()=>bRedraw());
+  renderBTools(); renderBInfo(); requestAnimationFrame(()=>{ bFit(); bRedraw(); });
+}
+function leaveBuildEditor(){ if(bld){ bFlush(); bld=null; } }
+function bSetSave(s){ const el=$('#bSave'); if(el){ el.className='save-state '+(s==='ok'?'ok':''); el.textContent=s==='ok'?'✓ Enregistré':'● Modifié'; } }
+let bSaveTimer=null;
+function bDirty(){ if(!bld) return; bld.dirty=true; bSetSave('dirty'); clearTimeout(bSaveTimer); bSaveTimer=setTimeout(bFlush,800); renderBInfo(); }
+async function bFlush(){ clearTimeout(bSaveTimer); const e=bld; if(!e||!e.dirty) return; e.dirty=false; const a=e.asset, d=mapToArrays(e.map); a.blocks=d.blocks; a.mats=d.mats; a.updatedAt=new Date().toISOString();
+  try{ a.thumb=await buildThumb(a); }catch{} await DB.put(a); if(bld===e) bSetSave('ok'); }
+function bSnap(){ bld.hist.push([...bld.map]); if(bld.hist.length>80) bld.hist.shift(); bld.redo=[]; bUndoUI(); }
+function bSwap(from,to){ const s=from.pop(); if(!s) return; to.push([...bld.map]); bld.map=new Map(s); bDirty(); bRedraw(); bUndoUI(); }
+function bUndoUI(){ const u=$('#bdUndo'), r=$('#bdRedo'); if(u) u.disabled=!bld?.hist.length; if(r) r.disabled=!bld?.redo.length; }
+
+function bStageSize(){ const r=$('#bStage').getBoundingClientRect(); return {w:r.width,h:r.height}; }
+function bFaces(withPreview=true){ const pc=buildCam(bld.rot), faces=[]; const lv=bld.level;
+  collectBuildFaces(bld.map,pc,{cut:bld.showAbove?null:lv,maxStage:bld.maxStage},faces);
+  if(bld.showAbove){ faces.forEach(f=>{ if(f.bz>lv) f.al=.28; }); }
+  if(withPreview&&bld.preview){ const pm=new Map(); for(const k of bld.preview.cells) pm.set(k,[bld.preview.erase?'__erase':bld.mat,0]); const pf=[]; collectBuildFaces(pm,pc,{},pf); pf.forEach(f=>{ f.al=bld.preview.erase?.55:.6; if(bld.preview.erase){ f.tint='#d2735f'; } f.dep+=.002; }); faces.push(...pf); }
+  if(bld.sonder){ const s=assets.find(x=>x.id==='builtin_sonder'); if(s){ const b=mapBounds(bld.map), ox=(b[3]>=b[0]?b[0]:0)-3.2, oy=(b[4]>=b[1]?(b[1]+b[4])/2:0); collectFaces(s,{ground:true,offset:[ox,oy],alpha:.55},pc,faces); } }
+  return faces; }
+function bFit(){ if(!bld) return; const {w,h}=bStageSize(); const pc=buildCam(bld.rot), b=mapBounds(bld.map), L=[];
+  const x0=Math.min(b[0],0)-3, y0=Math.min(b[1],0)-3, x1=Math.max(b[3],8)+4, y1=Math.max(b[4],8)+4, z1=Math.max(b[5]+1,4);
+  for(const x of [x0,x1]) for(const y of [y0,y1]) for(const z of [0,z1]) L.push(projRaw(pc,x,y,z));
+  const minX=Math.min(...L.map(p=>p[0])), maxX=Math.max(...L.map(p=>p[0])), minY=Math.min(...L.map(p=>p[1])), maxY=Math.max(...L.map(p=>p[1]));
+  if(bld.plan){ const s=Math.max(8,Math.min(w/(x1-x0),h/(y1-y0))*.92); bld.pcam={s,ox:w/2-(x0+x1)/2*s,oy:h/2-(y0+y1)/2*s}; return; }
+  const zoom=Math.min(w/(maxX-minX),h/(maxY-minY))*.92; bld.cam={zoom,ox:w/2-(minX+maxX)/2*zoom,oy:h/2-(minY+maxY)/2*zoom}; }
+let bRaf=false;
+function bRedraw(){ if(!bld||bRaf) return; bRaf=true; requestAnimationFrame(()=>{ bRaf=false; bDrawNow(); }); }
+function gridRange(){ const b=mapBounds(bld.map); return [Math.min(b[0],0)-3,Math.min(b[1],0)-3,Math.max(b[3],7)+4,Math.max(b[4],7)+4]; }
+function bDrawNow(){
+  if(!bld||route.view!=='build') return; const cv=$('#bCanvas'), {w,h}=bStageSize(), dpr=devDPR(); if(!w) return;
+  if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){ cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr); }
+  const x=cv.getContext('2d'); x.setTransform(dpr,0,0,dpr,0,0); const g=x.createLinearGradient(0,0,0,h); g.addColorStop(0,'#1f2a33'); g.addColorStop(1,'#12151a'); x.fillStyle=g; x.fillRect(0,0,w,h);
+  const [gx0,gy0,gx1,gy1]=gridRange(), lv=bld.level;
+  if(bld.plan){ if(!bld.pcam) bFit(); const {s,ox,oy}=bld.pcam; x.imageSmoothingEnabled=false;
+    for(const [k,v] of bld.map){ const [cx,cy,cz]=DEC(k); if(cz!==lv&&cz!==lv-1) continue; if(bld.maxStage!=null&&v[1]>bld.maxStage) continue; if(cz===lv-1&&bld.map.has(KEY(cx,cy,lv))) continue;
+      const T=texOf(v[0]), im=T.img.top, X=ox+cx*s, Y=oy+cy*s; x.globalAlpha=cz===lv?1:.32; x.fillStyle=rgbHex(T.avg); x.fillRect(X,Y,s,s); if(im&&im.complete&&im.naturalWidth) x.drawImage(im,X,Y,s,s); }
+    x.globalAlpha=1; if(bld.preview) for(const k of bld.preview.cells){ const [cx,cy,cz]=DEC(k); if(cz!==lv) continue; x.fillStyle=bld.preview.erase?'rgba(210,115,95,.55)':'rgba(215,180,110,.45)'; x.fillRect(ox+cx*s,oy+cy*s,s,s); }
+    x.strokeStyle='rgba(255,255,255,.09)'; x.lineWidth=1; x.beginPath(); for(let i=gx0;i<=gx1;i++){ x.moveTo(ox+i*s,oy+gy0*s); x.lineTo(ox+i*s,oy+gy1*s); } for(let j=gy0;j<=gy1;j++){ x.moveTo(ox+gx0*s,oy+j*s); x.lineTo(ox+gx1*s,oy+j*s); } x.stroke();
+    x.strokeStyle='rgba(215,180,110,.5)'; x.strokeRect(ox,oy,s,s);
+  } else {
+    if(!bld.cam) bFit(); const {zoom,ox,oy}=bld.cam, pc=buildCam(bld.rot), faces=bFaces(), below=faces.filter(f=>f.bz!=null&&f.bz<lv), rest=faces.filter(f=>!(f.bz!=null&&f.bz<lv));
+    drawBuildFaces(x,below,zoom,ox,oy);
+    // plan du niveau courant
+    const S=(X,Y)=>{ const p=projRaw(pc,X,Y,lv); return [ox+p[0]*zoom,oy+p[1]*zoom]; };
+    x.strokeStyle='rgba(215,180,110,.28)'; x.lineWidth=1; x.beginPath(); for(let i=gx0;i<=gx1;i++){ const a=S(i,gy0), b=S(i,gy1); x.moveTo(a[0],a[1]); x.lineTo(b[0],b[1]); } for(let j=gy0;j<=gy1;j++){ const a=S(gx0,j), b=S(gx1,j); x.moveTo(a[0],a[1]); x.lineTo(b[0],b[1]); } x.stroke();
+    drawBuildFaces(x,rest,zoom,ox,oy);
+  }
+  $('#bLevel').textContent=`Niveau ${lv} · ${(lv*.25).toFixed(2).replace('.',',')} m`;
+}
+// écran → case du niveau courant
+function bCellAt(px,py,forRemove){
+  const lv=bld.level;
+  if(bld.plan){ const {s,ox,oy}=bld.pcam; return [Math.floor((px-ox)/s),Math.floor((py-oy)/s),lv]; }
+  const {zoom,ox,oy}=bld.cam, pc=buildCam(bld.rot), X=(px-ox)/zoom, Y=(py-oy)/zoom;
+  const inv=z=>{ const rx=X/6, ry=(Y+4*z)/(3*pc.el); return [Math.floor(rx*pc.cs+ry*pc.sn),Math.floor(-rx*pc.sn+ry*pc.cs)]; };
+  if(forRemove){ const [cx,cy]=inv(lv+1); if(bld.map.has(KEY(cx,cy,lv))) return [cx,cy,lv]; }
+  const [cx,cy]=inv(lv); return [cx,cy,lv];
+}
+function lineCells(a,b){ const out=[]; let [x0,y0]=a; const [x1,y1]=b, dx=Math.abs(x1-x0), dy=-Math.abs(y1-y0), sx=x0<x1?1:-1, sy=y0<y1?1:-1; let e=dx+dy;
+  for(let n=0;n<400;n++){ out.push([x0,y0]); if(x0===x1&&y0===y1) break; const e2=2*e; if(e2>=dy){ e+=dy; x0+=sx; } if(e2<=dx){ e+=dx; y0+=sy; } } return out; }
+function shapeCells(a,b){ const lv=bld.level, H=bld.tool==='line'||bld.tool==='rect'?bld.height:1, out=[];
+  let cols=[]; if(bld.tool==='line') cols=lineCells(a,b);
+  else { const [x0,x1]=[Math.min(a[0],b[0]),Math.max(a[0],b[0])], [y0,y1]=[Math.min(a[1],b[1]),Math.max(a[1],b[1])]; for(let i=x0;i<=x1;i++) for(let j=y0;j<=y1;j++) if(!bld.outline||i===x0||i===x1||j===y0||j===y1) cols.push([i,j]); }
+  for(const [x,y] of cols) for(let z=lv;z<lv+H&&z<=80;z++) out.push(KEY(x,y,z)); return out; }
+function bApplyCell(c){ const k=KEY(c[0],c[1],c[2]); if(Math.abs(c[0])>200||Math.abs(c[1])>200) return false; const cur=bld.map.get(k);
+  if(bld.tool==='add'){ if(cur&&cur[0]===bld.mat&&cur[1]===bld.stage) return false; bld.map.set(k,[bld.mat,bld.stage]); return true; }
+  if(bld.tool==='del'){ return bld.map.delete(k); }
+  if(bld.tool==='paint'){ if(!cur||cur[0]===bld.mat) return false; bld.map.set(k,[bld.mat,cur[1]]); return true; }
+  if(bld.tool==='stage'){ if(!cur||cur[1]===bld.stage) return false; bld.map.set(k,[cur[0],bld.stage]); return true; }
+  return false; }
+let bPtrs=new Map(), bGest=null, bStroke=null;
+function bLocal(e){ const r=$('#bCanvas').getBoundingClientRect(); return {x:e.clientX-r.left,y:e.clientY-r.top}; }
+function bInit(){
+  const cv=$('#bCanvas');
+  cv.addEventListener('pointerdown',e=>{ if(!bld) return; cv.setPointerCapture(e.pointerId); const p=bLocal(e); bPtrs.set(e.pointerId,p);
+    if(bPtrs.size===2){ bStrokeCancel(); const [A,B]=[...bPtrs.values()]; bGest={d:Math.hypot(A.x-B.x,A.y-B.y),cx:(A.x+B.x)/2,cy:(A.y+B.y)/2}; return; }
+    if(bPtrs.size>2) return;
+    if(bld.tool==='pan'||e.button===1||e.button===2){ bGest={pan:true,x:p.x,y:p.y}; return; }
+    const forRemove=['del','paint','pick','stage'].includes(bld.tool)||(bld.erase&&['rect','line'].includes(bld.tool)), c=bCellAt(p.x,p.y,forRemove);
+    if(bld.tool==='pick'){ const v=bld.map.get(KEY(...c)); if(v){ bld.mat=v[0]; bld.stage=v[1]; renderBTools(); toast(matLabel(v[0])+' · '+(stageNamesB()[v[1]]||'étape '+(v[1]+1)),1400); } return; }
+    if(bld.tool==='rect'||bld.tool==='line'){ bStroke={shape:true,a:c,b:c}; bld.preview={cells:shapeCells(c,c),erase:bld.erase}; bRedraw(); return; }
+    bSnapPending=[...bld.map]; bStroke={last:c,changed:false}; if(bApplyCell(c)){ bStroke.changed=true; bRedraw(); } });
+  cv.addEventListener('pointermove',e=>{ if(!bld||!bPtrs.has(e.pointerId)) return; const p=bLocal(e); const prev=bPtrs.get(e.pointerId); bPtrs.set(e.pointerId,p);
+    if(bPtrs.size===2&&bGest&&!bGest.pan){ const [A,B]=[...bPtrs.values()], d=Math.hypot(A.x-B.x,A.y-B.y), cx=(A.x+B.x)/2, cy=(A.y+B.y)/2; bZoomAt(d/(bGest.d||d),bGest.cx,bGest.cy); bPan(cx-bGest.cx,cy-bGest.cy); bGest={d,cx,cy}; return; }
+    if(bGest?.pan){ bPan(p.x-bGest.x,p.y-bGest.y); bGest.x=p.x; bGest.y=p.y; return; }
+    if(!bStroke) return; const forRemove=['del','paint','stage'].includes(bld.tool)||(bStroke.shape&&bld.erase), c=bCellAt(p.x,p.y,forRemove);
+    if(bStroke.shape){ if(c[0]!==bStroke.b[0]||c[1]!==bStroke.b[1]){ bStroke.b=c; bld.preview={cells:shapeCells(bStroke.a,c),erase:bld.erase}; bRedraw(); } return; }
+    if(c[0]===bStroke.last[0]&&c[1]===bStroke.last[1]) return; let ch=false; for(const [x,y] of lineCells(bStroke.last,c)) ch=bApplyCell([x,y,bld.level])||ch; bStroke.last=c; if(ch){ bStroke.changed=true; bRedraw(); } });
+  const end=e=>{ if(!bPtrs.has(e.pointerId)) return; bPtrs.delete(e.pointerId); if(bPtrs.size<2&&bGest&&!bGest.pan) bGest=null; if(!bPtrs.size){ bGest=null; bStrokeEnd(); } };
+  cv.addEventListener('pointerup',end); cv.addEventListener('pointercancel',e=>{ bStrokeCancel(); end(e); });
+  cv.addEventListener('wheel',e=>{ if(!bld) return; e.preventDefault(); const p=bLocal(e); bZoomAt(e.deltaY<0?1.15:1/1.15,p.x,p.y); },{passive:false});
+  cv.addEventListener('contextmenu',e=>e.preventDefault());
+  new ResizeObserver(()=>{ if(bld&&route.view==='build'){ bFit(); bRedraw(); } }).observe($('#bStage'));
+}
+let bSnapPending=null;
+function bStrokeEnd(){ const s=bStroke; bStroke=null; if(!s||!bld) return;
+  if(s.shape){ const cells=bld.preview?.cells||[]; bld.preview=null; bld.hist.push([...bld.map]); bld.redo=[]; let n=0;
+    for(const k of cells){ if(bld.erase){ if(bld.map.delete(k)) n++; } else { bld.map.set(k,[bld.mat,bld.stage]); n++; } }
+    if(n){ if(bld.hist.length>80) bld.hist.shift(); bDirty(); } else bld.hist.pop(); bUndoUI(); bRedraw(); return; }
+  if(s.changed){ bld.hist.push(bSnapPending); if(bld.hist.length>80) bld.hist.shift(); bld.redo=[]; bUndoUI(); bDirty(); } bSnapPending=null; }
+function bStrokeCancel(){ if(!bStroke||!bld) return; if(bStroke.shape) bld.preview=null; else if(bStroke.changed&&bSnapPending) bld.map=new Map(bSnapPending); bStroke=null; bSnapPending=null; bRedraw(); }
+function bZoomAt(f,cx,cy){ if(bld.plan){ const c=bld.pcam, s=clamp(c.s*f,4,120); c.ox=cx-(cx-c.ox)*s/c.s; c.oy=cy-(cy-c.oy)*s/c.s; c.s=s; } else { const c=bld.cam, z=clamp(c.zoom*f,.6,40); c.ox=cx-(cx-c.ox)*z/c.zoom; c.oy=cy-(cy-c.oy)*z/c.zoom; c.zoom=z; } bRedraw(); }
+function bPan(dx,dy){ const c=bld.plan?bld.pcam:bld.cam; c.ox+=dx; c.oy+=dy; bRedraw(); }
+function stageNamesB(){ const s=bld?.asset.stages; return s&&s.length?s:ENGINE_STAGES; }
+
+function renderBTools(){
+  if(!bld) return;
+  const row=$('#bToolRow'); row.innerHTML=B_TOOLS.map(t=>`<button class="tool ${t.id===bld.tool?'on':''}" data-t="${t.id}" aria-label="${t.label}" title="${t.label}">${t.icon}<small>${t.label}</small></button>`).join('');
+  row.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{ bld.tool=b.dataset.t; renderBTools(); });
+  const o=$('#bOptRow'), shape=['rect','line'].includes(bld.tool);
+  o.innerHTML=`<div class="lvl-ctl"><button class="icon" id="bLvDown" aria-label="Descendre d’un niveau">▼</button><span id="bLvLabel">Niveau ${bld.level}</span><button class="icon" id="bLvUp" aria-label="Monter d’un niveau">▲</button></div>
+    ${shape?`<div class="lvl-ctl"><button class="icon" id="bHDown" aria-label="Moins haut">−</button><span>Hauteur ${bld.height}</span><button class="icon" id="bHUp" aria-label="Plus haut">+</button></div>`:''}
+    ${bld.tool==='rect'?`<button class="opt ${bld.outline?'on':''}" id="bOutline">${bld.outline?'Contour':'Plein'}</button>`:''}
+    ${shape?`<button class="opt ${bld.erase?'on':''}" id="bErase">Effacer</button>`:''}
+    <button class="opt ${bld.showAbove?'on':''}" id="bAbove" title="Afficher en transparence ce qui est au-dessus du niveau">Voir au-dessus</button>
+    <select id="bStageSel" aria-label="Étape des voxels posés">${stageNamesB().map((n,i)=>`<option value="${i}" ${i===bld.stage?'selected':''}>Étape : ${esc(n)}</option>`).join('')}</select>`;
+  const lv=d=>{ bld.level=clamp(bld.level+d,0,60); renderBTools(); bRedraw(); };
+  $('#bLvDown').onclick=()=>lv(-1); $('#bLvUp').onclick=()=>lv(1);
+  if(shape){ $('#bHDown').onclick=()=>{ bld.height=Math.max(1,bld.height-1); renderBTools(); }; $('#bHUp').onclick=()=>{ bld.height=Math.min(20,bld.height+1); renderBTools(); }; $('#bErase').onclick=()=>{ bld.erase=!bld.erase; renderBTools(); }; }
+  if(bld.tool==='rect') $('#bOutline').onclick=()=>{ bld.outline=!bld.outline; renderBTools(); };
+  $('#bAbove').onclick=()=>{ bld.showAbove=!bld.showAbove; renderBTools(); bRedraw(); };
+  $('#bStageSel').onchange=e=>{ bld.stage=+e.target.value; };
+  renderBPalette(); $('#bViewBtn').textContent=bld.plan?'3D':'Plan'; $('#bSonderBtn').classList.toggle('on',bld.sonder);
+}
+function renderBPalette(){
+  const P=terrainPalette(false), list=[...P.eng,...P.mine,...P.legacy.filter(a=>a.id===bld.mat||bld.asset.mats.includes(a.id))], box=$('#bPalette');
+  if(!list.some(a=>a.id===bld.mat)){ const a=assets.find(x=>x.id===bld.mat); if(a) list.unshift(a); }
+  box.innerHTML=list.map(a=>`<button class="bmat ${a.id===bld.mat?'on':''}" data-m="${a.id}" title="${esc(a.name)}"><img alt="" src="${a.thumb||''}"><span>${esc(a.name)}</span>${engineMatOf(a.id)?'':'<i class="warn-dot" title="Inconnu du moteur">!</i>'}</button>`).join('')+`<button class="bmat more" id="bMatMore"><b>＋</b><span>Bibliothèque</span></button>`;
+  box.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{ bld.mat=b.dataset.m; texOf(bld.mat); if(['pick','pan','del','stage'].includes(bld.tool)) bld.tool='add'; renderBTools(); });
+  $('#bMatMore').onclick=pickTerrainBlock;
+  const cur=box.querySelector('.bmat.on'); if(cur) cur.scrollIntoView({block:'nearest',inline:'nearest'});
+}
+async function pickTerrainBlock(){
+  const P=terrainPalette(true), card=a=>`<button class="bmat ${a.id===bld.mat?'on':''}" data-v="${a.id}"><img alt="" src="${a.thumb||''}"><span>${esc(a.name)}</span>${engineMatOf(a.id)?'':'<i class="warn-dot">!</i>'}</button>`;
+  const v=await sheet(`<h3>Voxels de la bibliothèque Terrain</h3>
+    <div class="tool-label" style="display:block">Matières du jeu</div><div class="bmat-grid">${P.eng.map(card).join('')}</div>
+    <div class="tool-label" style="display:block">Tes blocs ${P.mine.length?'':'<span class="muted">(aucun pour l’instant)</span>'}</div><div class="bmat-grid">${P.mine.map(card).join('')}</div>
+    ${P.legacy.length?`<div class="tool-label" style="display:block">Historique (V0.1)</div><div class="bmat-grid">${P.legacy.map(card).join('')}</div>`:''}
+    <p class="muted pv-small">« ! » : bloc perso, inconnu du moteur. Il s’affiche dans le studio ; à l’export, il est signalé sans matière du jeu.</p>
+    <div class="acts"><button data-v="__new">＋ Nouveau bloc généré</button><button data-v="no" class="primary">Fermer</button></div>`);
+  if(!v||v==='no') return;
+  if(v==='__new'){ const a=await generatorSheet(false,{stay:true}); if(a){ bld.mat=a.id; texOf(a.id); } renderBTools(); return; }
+  bld.mat=v; texOf(v); if(['pick','pan','del','stage'].includes(bld.tool)) bld.tool='add'; renderBTools();
+}
+function renderBInfo(){
+  const box=$('#bInfo'); if(!box||!bld) return; const html=bInfoHTML(); box.innerHTML=html; bindBInfo(box);
+}
+function bInfoHTML(){
+  const map=bld.map, b=mapBounds(map), cnt=buildCounts(map), unknown=cnt.filter(([id])=>!engineMatOf(id)).reduce((s,[,n])=>s+n,0);
+  const dims=map.size?[b[3]-b[0]+1,b[4]-b[1]+1,b[5]-b[2]+1]:[0,0,0], m=v=>(v*.25).toFixed(2).replace('.',',');
+  const names=stageNamesB(), maxS=Math.max(0,...[...map.values()].map(v=>v[1]));
+  const perStage=names.map((n,i)=>[n,[...map.values()].filter(v=>v[1]===i).length]);
+  return `<div class="binfo-sec"><h3>${map.size} voxel${map.size>1?'s':''}</h3><p class="muted">${dims[0]} × ${dims[1]} × ${dims[2]} voxels · ${m(dims[0])} × ${m(dims[1])} × ${m(dims[2])} m</p>
+    ${unknown?`<div class="gap gap-warn">• ${unknown} voxel${unknown>1?'s':''} en blocs perso : inconnus du moteur.</div>`:map.size?'<div class="gap gap-info">ℹ Toutes les matières existent dans le jeu.</div>':''}</div>
+    <div class="binfo-sec"><h3>Matières à rassembler</h3>${cnt.length?cnt.map(([id,n])=>{ const a=assets.find(x=>x.id===id); return `<div class="bcount" data-id="${id}"><img alt="" src="${a?.thumb||''}"><span>${esc(matLabel(id))}${engineMatOf(id)?'':' <i class="warn-dot">!</i>'}</span><b>${n}</b><button class="icon ghost" data-rep="${id}" aria-label="Remplacer partout" title="Remplacer partout">⇄</button></div>`; }).join(''):'<p class="muted">Aucun voxel posé.</p>'}</div>
+    <div class="binfo-sec"><h3>Chantier</h3>
+      <div class="gene-row"><span>Voir jusqu’à</span><input type="range" id="bMaxStage" min="0" max="${Math.max(maxS,0)}" step="1" value="${bld.maxStage??maxS}"><b>${bld.maxStage==null?'tout':esc(names[bld.maxStage]||'')}</b></div>
+      ${perStage.map(([n,c],i)=>c||i<=maxS?`<div class="bstage"><span>${i+1}. ${esc(n)}</span><b>${c}</b></div>`:'').join('')}
+      <button class="opt" id="bStageNames">Renommer les étapes</button></div>`;
+}
+function bindBInfo(box){
+  box.querySelectorAll('.bcount').forEach(r=>r.onclick=e=>{ if(e.target.closest('[data-rep]')) return; bld.mat=r.dataset.id; if(['pick','pan','del','stage'].includes(bld.tool)) bld.tool='add'; renderBTools(); });
+  box.querySelectorAll('[data-rep]').forEach(b=>b.onclick=async()=>{ const from=b.dataset.rep, P=terrainPalette(true);
+    const v=await sheet(`<h3>Remplacer « ${esc(matLabel(from))} » par…</h3><div class="bmat-grid">${[...P.eng,...P.mine,...P.legacy].filter(a=>a.id!==from).map(a=>`<button class="bmat" data-v="${a.id}"><img alt="" src="${a.thumb||''}"><span>${esc(a.name)}</span></button>`).join('')}</div><div class="acts"><button data-v="no">Annuler</button></div>`);
+    if(!v||v==='no') return; bSnap(); for(const [k,val] of bld.map) if(val[0]===from) bld.map.set(k,[v,val[1]]); texOf(v); bDirty(); bRedraw(); });
+  const ms=box.querySelector('#bMaxStage'); if(ms) ms.oninput=e=>{ const mx=+e.target.max, v=+e.target.value; bld.maxStage=v>=mx?null:v; e.target.nextElementSibling.textContent=bld.maxStage==null?'tout':stageNamesB()[v]||''; bRedraw(); };
+  const sn=box.querySelector('#bStageNames'); if(sn) sn.onclick=async()=>{ const n=await askText('Étapes (séparées par des virgules)',stageNamesB().join(', '),'Enregistrer'); if(n!==null){ bld.asset.stages=n.split(',').map(s=>s.trim()).filter(Boolean); bld.dirty=true; bDirty(); renderBTools(); } };
+}
+function bInitButtons(){
+  $('#bBack').onclick=()=>history.back();
+  $('#bName').onchange=e=>{ const n=e.target.value.trim(); if(n&&bld){ bld.asset.name=n; bld.dirty=true; bDirty(); } };
+  $('#bdUndo').onclick=()=>bld&&bSwap(bld.hist,bld.redo); $('#bdRedo').onclick=()=>bld&&bSwap(bld.redo,bld.hist);
+  $('#bRotL').onclick=()=>{ if(!bld) return; bld.rot=(bld.rot+3)%4; bFit(); bRedraw(); }; $('#bRotR').onclick=()=>{ if(!bld) return; bld.rot=(bld.rot+1)%4; bFit(); bRedraw(); };
+  $('#bViewBtn').onclick=()=>{ if(!bld) return; bld.plan=!bld.plan; bFit(); renderBTools(); bRedraw(); };
+  $('#bSonderBtn').onclick=()=>{ if(!bld) return; bld.sonder=!bld.sonder; renderBTools(); bRedraw(); };
+  $('#bZoomIn').onclick=()=>{ const {w,h}=bStageSize(); bZoomAt(1.3,w/2,h/2); }; $('#bZoomOut').onclick=()=>{ const {w,h}=bStageSize(); bZoomAt(1/1.3,w/2,h/2); }; $('#bFitBtn').onclick=()=>{ bFit(); bRedraw(); };
+  $('#bInfoBtn').onclick=async()=>{ if(!bld) return; await sheet(`<h3>${esc(bld.asset.name)}</h3><div id="bInfoSheet">${bInfoHTML()}</div><div class="acts"><button data-v="ok" class="primary">Fermer</button></div>`,s=>bindBInfo(s.querySelector('#bInfoSheet'))); renderBInfo(); };
+  $('#bMenu').onclick=buildMenu;
+  window.addEventListener('keydown',e=>{ if(!bld||route.view!=='build'||e.target.tagName==='INPUT') return;
+    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){ e.preventDefault(); e.shiftKey?bSwap(bld.redo,bld.hist):bSwap(bld.hist,bld.redo); return; }
+    if(e.key==='PageUp'||e.key===']'){ bld.level=Math.min(60,bld.level+1); renderBTools(); bRedraw(); } if(e.key==='PageDown'||e.key==='['){ bld.level=Math.max(0,bld.level-1); renderBTools(); bRedraw(); }
+    const t={a:'add',r:'del',x:'rect',l:'line',p:'paint',i:'pick',h:'pan'}[e.key]; if(t){ bld.tool=t; renderBTools(); } });
+}
+async function buildMenu(){
+  if(!bld) return; const a=bld.asset;
+  const v=await sheet(`<h3>${esc(a.name)}</h3><div class="menu-list">
+    <button data-v="rot"><span>⟳</span>Faire pivoter la construction d’un quart de tour</button>
+    <button data-v="mir"><span>⇆</span>Retourner en miroir</button>
+    <button data-v="ground"><span>⤓</span>Poser au sol (niveau 0) et recentrer</button>
+    <button data-v="board"><span>▦</span>Planche PNG</button>
+    <button data-v="tags"><span>#</span>Tags</button>
+    <button data-v="ver"><span>🕘</span>Versions précédentes</button>
+    <button data-v="exp"><span>⇪</span>Exporter cette construction</button>
+    <button data-v="clear" class="danger"><span>✕</span>Tout effacer</button></div>`);
+  const remap=fn=>{ bSnap(); const m=new Map(); for(const [k,val] of bld.map){ const d=fn(DEC(k)); m.set(KEY(d[0],d[1],d[2]),val); } bld.map=m; bDirty(); bFit(); bRedraw(); };
+  if(v==='rot'){ const b=mapBounds(bld.map); remap(([x,y,z])=>[b[0]+(b[4]-y),b[1]+(x-b[0]),z]); }
+  if(v==='mir'){ const b=mapBounds(bld.map); remap(([x,y,z])=>[x,b[1]+b[4]-y,z]); }
+  if(v==='ground'){ const b=mapBounds(bld.map); remap(([x,y,z])=>[x-b[0],y-b[1],z-b[2]]); }
+  if(v==='board'){ await bFlush(); exportBoard([a],a.name,{cols:1}); }
+  if(v==='tags'){ const n=await askText('Tags',(a.tags||[]).join(', '),'Enregistrer'); if(n!==null){ a.tags=parseTags(n); bld.dirty=true; bDirty(); } }
+  if(v==='ver'){ await bFlush(); const n=await versionsSheet(a); if(n){ bld=null; openBuildEditor(n.id); } }
+  if(v==='exp'){ await bFlush(); exportAssets([a],a.name); }
+  if(v==='clear'&&await confirmBox('Tout effacer ?','Tous les voxels seront retirés (annulable).','Effacer',true)){ bSnap(); bld.map=new Map(); bDirty(); bRedraw(); }
+}
+function buildJSON(a){ const map=blocksMap(a), b=mapBounds(map);
+  return {format:'sonder-build',formatVersion:1,name:a.name,unit:'1 voxel = 1 voxel du monde (25 cm)',axes:{x:'est',y:'nord',z:'haut'},
+    size:map.size?{x:b[3]-b[0]+1,y:b[4]-b[1]+1,z:b[5]-b[2]+1}:{x:0,y:0,z:0},origin:[b[0],b[1],b[2]],
+    materials:a.mats.map(id=>{ const k=engineMatOf(id); return {asset:id,name:matLabel(id),engine:k,engineId:k?ENGINE_IDS[k]:null}; }),
+    stages:a.stages||ENGINE_STAGES, voxels:(()=>{ const out=[]; const B=a.blocks; for(let i=0;i+4<B.length;i+=5) out.push([B[i],B[i+1],B[i+2],B[i+3],B[i+4]]); return out; })(),
+    voxelFormat:'[x, y, z, indice dans materials, étape]',
+    counts:buildCounts(map).map(([id,n])=>({asset:id,name:matLabel(id),engine:engineMatOf(id),count:n})),
+    note:'Plan de construction. Le moteur V0.7.5.4 ne lit pas encore ce fichier : il décrit les voxels et les matières que les Sonders doivent poser.'}; }
+bInit(); bInitButtons();
+
 /* ================= Démarrage ================= */
 (async function init(){
   try{ await DB.open(); const all=((await DB.all())||[]).map(normalizeAsset); trash=all.filter(a=>a.deletedAt); assets=all.filter(a=>!a.deletedAt); refreshBiomeList(); const st=await DB.get('settings'); if(st) settings={...settings,...st}; settings.poseLibrary=Array.isArray(settings.poseLibrary)?settings.poseLibrary:[]; }
   catch(e){ toast('Stockage indisponible : les assets ne seront pas conservés', 5000); }
   await migrateV01();
   try{ await purgeOldTrash(); }catch(e){ console.warn(e); }
-  try{ const sv=await DB.get('builtinSeed'); if(sv!==5){ if(sv>=1) toast(sv===4?'Installation des 24 matières voxel du moteur…':sv===3?'Installation des biomes et des matières du moteur…':sv===2?'Installation des constructions et des biomes du moteur…':'Installation de la faune, de la flore et des biomes du moteur…',8000); const n=await seedBuiltins(false); await upgradeBuiltinEco(); await DB.set('builtinSeed',5); refreshBiomeList(); if(sv===1&&n) toast(n+' modèles du moteur ajoutés à ta bibliothèque',4000); } }catch(e){ console.warn(e); }
+  try{ const sv=await DB.get('builtinSeed'); if(sv!==6){ if(sv>=5) toast('Installation des constructions en voxels terrain…',6000); else if(sv>=1) toast(sv===4?'Installation des 24 matières voxel du moteur…':sv===3?'Installation des biomes et des matières du moteur…':sv===2?'Installation des constructions et des biomes du moteur…':'Installation de la faune, de la flore et des biomes du moteur…',8000); const n=await seedBuiltins(false); await upgradeBuiltinEco(); if(sv>=1&&sv<6){ for(const b of assets.filter(x=>x.type==='model'&&/^bt_/.test(x.builtin?.key||'')&&x.createdAt===x.updatedAt)){ const e=builtinCatalog().find(e=>e.key===b.builtin.key); if(!e) continue; const n=await makeBuiltin(e); assets=assets.filter(x=>x.id!==b.id); assets.push(n); await DB.req('assets','readwrite',s=>s.put(n)); } } await DB.set('builtinSeed',6); refreshBiomeList(); if(sv===1&&n) toast(n+' modèles du moteur ajoutés à ta bibliothèque',4000); } }catch(e){ console.warn(e); }
   try{ if(navigator.storage?.persist && !(await navigator.storage.persisted())) navigator.storage.persist(); }catch{}
   history.replaceState({view:'home'},''); go({view:'home'}, false);
   if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('service-worker.js').catch(()=>{});
