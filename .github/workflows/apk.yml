@@ -1,0 +1,87 @@
+name: APK Sonder Studio
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'apk_build.py'
+      - 'package.json'
+      - 'capacitor.config.json'
+      - '.github/workflows/apk.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apk
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Vérifier le mot de passe de signature
+        env:
+          SONDER_KEYSTORE_PASSWORD: ${{ secrets.SONDER_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -z "$SONDER_KEYSTORE_PASSWORD" ]; then
+            echo "::error::Le secret SONDER_KEYSTORE_PASSWORD manque (Settings > Secrets and variables > Actions > New repository secret)."
+            exit 1
+          fi
+          test -f sonder-release.keystore || { echo "::error::sonder-release.keystore absent à la racine du dépôt."; exit 1; }
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Préparer l'app web
+        run: |
+          npm install --no-audit --no-fund
+          pip install --quiet pillow
+          python3 apk_build.py prepare
+
+      - name: Créer le projet Android
+        env:
+          RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          rm -rf android
+          npx cap add android
+          python3 apk_build.py patch
+          npx cap sync android
+
+      - name: Fabriquer l'APK signé
+        env:
+          SONDER_KEYSTORE_PASSWORD: ${{ secrets.SONDER_KEYSTORE_PASSWORD }}
+        run: |
+          cd android
+          ./gradlew assembleRelease --no-daemon --stacktrace
+          cd ..
+          cp android/app/build/outputs/apk/release/app-release.apk "SonderStudio-${STUDIO_VERSION}.apk"
+
+      - name: Publier dans « Releases »
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-${{ env.STUDIO_VERSION }}-${{ github.run_number }}
+          name: Sonder Studio ${{ env.STUDIO_VERSION }} (APK n°${{ github.run_number }})
+          files: SonderStudio-*.apk
+          make_latest: true
+          body: |
+            Télécharge le fichier .apk ci-dessous depuis ton téléphone, puis ouvre-le pour l'installer.
+            Pour mettre à jour, installe le nouvel APK par-dessus l'ancien : tes assets sont conservés.
+            Ne désinstalle pas l'app (cela effacerait ses données) ; tes sauvegardes automatiques sont dans Documents/SonderStudio/Sauvegardes.
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SonderStudio-apk
+          path: SonderStudio-*.apk
