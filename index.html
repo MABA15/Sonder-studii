@@ -437,6 +437,9 @@ textarea{background:var(--bg);border:1px solid var(--line);border-radius:var(--r
   #bInfoBtn{display:none}
 }
 @media (max-width:699px){ #bSave{display:none} .bview .ed-top .icon{min-width:38px} }
+/* REV 2.8 */
+.pill.ok{color:#8fb57b;border-color:#3b5236}
+.bk-ico{font-size:22px;margin-right:6px}
 </style>
 </head>
 <body>
@@ -475,11 +478,12 @@ textarea{background:var(--bg);border:1px solid var(--line);border-radius:var(--r
       <button class="primary" id="btnExportAll"><span>⇪</span>Exporter pour Sonder</button>
       <button id="btnRestore"><span>⇩</span>Restaurer une sauvegarde</button>
       <button id="btnGenerators"><span>🧬</span>Générateurs</button>
+      <button id="btnBackups"><span>💾</span>Sauvegardes</button>
       <button id="btnTrash"><span>🗑</span>Corbeille</button>
       <button id="btnSettings"><span>⚙</span>Réglages</button>
     </div>
     <div class="hidden"><button id="btnCreatureGen"></button><button id="btnTextureGen"></button></div>
-    <input type="file" id="zipInput" accept=".zip,application/zip" hidden>
+    <input type="file" id="zipInput" accept=".zip,.json,application/zip,application/json" hidden>
   </div></div>
 </section>
 
@@ -725,7 +729,7 @@ textarea{background:var(--bg);border:1px solid var(--line);border-radius:var(--r
 <div class="toast hidden" id="toast"></div>
 <script>(() => {
 'use strict';
-const VERSION = '2.7';
+const VERSION = '2.8';
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const CATS = {
   terrain: {label:'Terrain', glyph:'▦', color:'#6f5238', desc:'Blocs voxel : sols, roche, eau', kind:'block'},
@@ -777,7 +781,7 @@ const DB = {
   open(){ return new Promise((res,rej)=>{ const r=indexedDB.open('sonder-studio',1);
     r.onupgradeneeded=()=>{ const d=r.result; d.createObjectStore('assets',{keyPath:'id'}); d.createObjectStore('kv'); };
     r.onsuccess=()=>{ this.db=r.result; res(); }; r.onerror=()=>rej(r.error); }); },
-  req(store, mode, fn){ return new Promise((res,rej)=>{ if(!this.db) return res(undefined); const t=this.db.transaction(store,mode); const q=fn(t.objectStore(store)); t.oncomplete=()=>res(q&&q.result); t.onerror=()=>rej(t.error); }); },
+  req(store, mode, fn){ return new Promise((res,rej)=>{ if(!this.db) return res(undefined); const t=this.db.transaction(store,mode); const q=fn(t.objectStore(store)); t.oncomplete=()=>{ if(store==='assets'&&mode==='readwrite') noteChange(); res(q&&q.result); }; t.onerror=()=>rej(t.error); }); },
   all(){ return this.req('assets','readonly',s=>s.getAll()); },
   async put(a){ await versionBefore(a); return this.req('assets','readwrite',s=>s.put(a)); },
   del(id){ return this.req('assets','readwrite',s=>s.delete(id)); },
@@ -917,7 +921,7 @@ async function renderHome(){
   const line=$('#storageLine'); const parts=[`<span class="pill">${assets.length} asset${assets.length>1?'s':''}</span>`];
   try{ const est=await navigator.storage?.estimate?.(); if(est) parts.push(`<span class="pill">${(est.usage/1048576).toFixed(1)} Mo utilisés</span>`); }catch{}
   const days = settings.lastExport ? (Date.now()-Date.parse(settings.lastExport))/864e5 : Infinity;
-  if(assets.length && days>7) parts.push(`<span class="pill warn">${settings.lastExport?'Dernière sauvegarde il y a '+Math.floor(days)+' j':'Jamais sauvegardé'}</span>`);
+  const bp=backupPill(); if(bp) parts.push(bp); else if(assets.length && days>7) parts.push(`<span class="pill warn">${settings.lastExport?'Dernière sauvegarde il y a '+Math.floor(days)+' j':'Jamais sauvegardé'}</span>`);
   line.innerHTML=parts.join('');
   renderBiomeCards(); renderHomeExtras();
   drawHero();
@@ -1549,6 +1553,7 @@ async function exportAssets(list, label){
   if(list.length===assets.length){ settings.lastExport=new Date().toISOString(); saveSettings(); }
   $('#toast').classList.add('hidden');
   const file=new File([blob], name, {type:'application/zip'});
+  if(NATIVE){ $('#toast').classList.add('hidden'); await nativeExport(blob,name); if(route.view==='home') renderHome(); return; }
   const canShare = navigator.canShare && navigator.canShare({files:[file]});
   const v = canShare ? await sheet(`<h3>Export prêt</h3><p>${list.length} asset(s) · ${(blob.size/1024).toFixed(0)} Ko<br>${esc(name)}</p><div class="menu-list"><button data-v="dl"><span>⇩</span>Enregistrer dans Téléchargements</button><button data-v="share"><span>↗</span>Envoyer vers… (Drive, mail, PC)</button></div>`) : 'dl';
   if(v==='share'){ try{ await navigator.share({files:[file], title:name}); }catch{} }
@@ -1561,6 +1566,7 @@ $('#btnExportAll').onclick=()=>exportAssets(assets, 'tout');
 $('#btnRestore').onclick=()=>$('#zipInput').click();
 $('#zipInput').onchange=async e=>{
   const f=e.target.files[0]; e.target.value=''; if(!f) return;
+  if(/\.json$/i.test(f.name)||f.type==='application/json'){ await restoreBackupText(await f.text(),f.name); return; }
   try{
     const z=await unzip(await f.arrayBuffer()); if(!z['manifest.json']) throw new Error('manifest.json absent : ce n’est pas un export Sonder');
     const man=JSON.parse(td.decode(z['manifest.json']));
@@ -1604,6 +1610,7 @@ $('#btnSettings').onclick=async()=>{
       <button data-v="persist"><span>🔒</span>${persisted?'Stockage protégé ✓':'Protéger mes assets contre le nettoyage auto'}</button>
       <button data-v="pal"><span>◑</span>Réinitialiser la palette Sonder</button>
       <button data-v="seed"><span>↺</span>Réinstaller les modèles d’origine de Sonder</button>
+      <button data-v="backups"><span>💾</span>Sauvegardes${NATIVE?' automatiques':''}</button>
       <button data-v="perf"><span>⏱</span>Vérifier les performances du téléphone</button>
       <button data-v="trash"><span>🗑</span>Corbeille (${trash.length})</button>
     </div>
@@ -1615,7 +1622,7 @@ $('#btnSettings').onclick=async()=>{
   if(v==='persist'){ try{ const ok=await navigator.storage.persist(); toast(ok?'Stockage protégé':'Android a refusé : installe l’app sur l’écran d’accueil puis réessaie', 3500); }catch{ toast('Non disponible sur ce navigateur'); } }
   if(v==='seed'){ const r=await sheet(`<h3>Modèles d’origine</h3><p>Ils sont extraits du moteur Sonder V0.7.5.4 : 12 biomes avec leurs couches, 7 biomes souterrains de conception, Sonder, 4 constructions, 22 espèces animales et 4 gabarits physiques, 26 arbres et plantes par biome, 7 composants animaux, 3 objets et les 24 matières voxel du monde (plus l’historique : 7 modèles de secours et 18 matériaux de la V0.1).</p><div class="menu-list"><button data-v="miss"><span>＋</span>Réinstaller ceux qui manquent</button><button data-v="all" class="danger"><span>↺</span>Tout remettre à l’origine (écrase tes retouches)</button></div>`);
     if(r){ toast('Installation…',6000); if(r==='all'||r==='miss'){ settings.removedBuiltins=[]; saveSettings(); for(const t of [...trash]) if(t.builtin) await purgeForever(t); } const n=await seedBuiltins(r==='all'); toast(n+' modèle(s) installé(s)'); refreshBiomeList(); renderHome(); } }
-  if(v==='perf') await perfCheck(); if(v==='trash') await trashSheet();
+  if(v==='backups') await backupsSheet(); if(v==='perf') await perfCheck(); if(v==='trash') await trashSheet();
   if(v==='pal' && await confirmBox('Réinitialiser la palette ?', 'Les couleurs ajoutées seront retirées.', 'Réinitialiser', true)){ settings.palette=[...DEFAULT_PALETTE]; saveSettings(); }
 };
 
@@ -2361,7 +2368,7 @@ $('#mCraftEdit').onclick=editCraftingComposition;
 function u32le(a,o){return (a[o]|a[o+1]<<8|a[o+2]<<16|a[o+3]<<24)>>>0;} function str4(a,o){return String.fromCharCode(a[o],a[o+1],a[o+2],a[o+3]);}
 async function importVoxFile(file){ const a=new Uint8Array(await file.arrayBuffer()); if(str4(a,0)!=='VOX ')throw Error('Fichier VOX invalide'); let o=20, size=[0,0,0],vox=[],pal=null;while(o+12<=a.length){const id=str4(a,o),n=u32le(a,o+4),ch=u32le(a,o+8),d=o+12;if(id==='SIZE'&&n>=12)size=[u32le(a,d),u32le(a,d+4),u32le(a,d+8)];if(id==='XYZI'&&n>=4){const c=u32le(a,d);for(let i=0;i<c;i++)vox.push([a[d+4+i*4],a[d+5+i*4],a[d+6+i*4],a[d+7+i*4]-1]);}if(id==='RGBA'&&n>=1024){pal=[];for(let i=0;i<256;i++)pal.push(rgbHex([a[d+i*4],a[d+i*4+1],a[d+i*4+2]]));}o=d+n+ch;} if(!vox.length)throw Error('Aucun voxel');const P=activePart();mSnapshot([P]);rt(P).map.clear();const colors=pal||Array.from({length:256},(_,i)=>rgbHex([i,i,i]));vox.forEach(v=>{let ci=md.asset.palette.indexOf(colors[v[3]]);if(ci<0){ci=md.asset.palette.length;md.asset.palette.push(colors[v[3]]);}rt(P).map.set(KEY(v[0]-Math.floor(size[0]/2),v[1]-Math.floor(size[1]/2),v[2]),ci);});bump(P);mCommit();renderMPalette();mFit();mDraw(); }
 function exportVoxModel(){const a=md.asset, all=[];let mn=[1e9,1e9,1e9],mx=[-1e9,-1e9,-1e9];a.parts.forEach(p=>{for(const[k,ci]of rt(p).map){const d=DEC(k);all.push([...d,ci]);d.forEach((v,i)=>{mn[i]=Math.min(mn[i],v);mx[i]=Math.max(mx[i],v);});}});if(!all.length)return toast('Modèle vide');const sz=mx.map((v,i)=>v-mn[i]+1);if(Math.max(...sz)>255)return toast('MagicaVoxel limite ce format à 255 voxels par axe');const pal=[...a.palette].slice(0,255);const chunks=[];const chunk=(id,data)=>{const h=new Uint8Array(12+data.length),dv=new DataView(h.buffer);for(let i=0;i<4;i++)h[i]=id.charCodeAt(i);dv.setUint32(4,data.length,true);dv.setUint32(8,0,true);h.set(data,12);return h;};let d=new Uint8Array(12),dv=new DataView(d.buffer);sz.forEach((v,i)=>dv.setUint32(i*4,v,true));chunks.push(chunk('SIZE',d));d=new Uint8Array(4+all.length*4);dv=new DataView(d.buffer);dv.setUint32(0,all.length,true);all.forEach((v,i)=>{d[4+i*4]=v[0]-mn[0];d[5+i*4]=v[1]-mn[1];d[6+i*4]=v[2]-mn[2];d[7+i*4]=Math.min(255,v[3]+1);});chunks.push(chunk('XYZI',d));d=new Uint8Array(1024);for(let i=0;i<256;i++){const c=hexRgb(pal[i]||'#000000');d[i*4]=c[0];d[i*4+1]=c[1];d[i*4+2]=c[2];d[i*4+3]=255;}chunks.push(chunk('RGBA',d));const clen=chunks.reduce((s,c)=>s+c.length,0),main=new Uint8Array(12),mdv=new DataView(main.buffer);'MAIN'.split('').forEach((c,i)=>main[i]=c.charCodeAt(0));mdv.setUint32(4,0,true);mdv.setUint32(8,clen,true);const head=new Uint8Array(8);'VOX '.split('').forEach((c,i)=>head[i]=c.charCodeAt(0));new DataView(head.buffer).setUint32(4,150,true);downloadBlob(new Blob([head,main,...chunks],{type:'application/octet-stream'}),slug(a.name)+'.vox'); }
-function downloadBlob(blob,name){const u=URL.createObjectURL(blob),A=document.createElement('a');A.href=u;A.download=name;document.body.appendChild(A);A.click();A.remove();setTimeout(()=>URL.revokeObjectURL(u),1000);}
+function downloadBlob(blob,name){if(NATIVE) return nativeExport(blob,name);const u=URL.createObjectURL(blob),A=document.createElement('a');A.href=u;A.download=name;document.body.appendChild(A);A.click();A.remove();setTimeout(()=>URL.revokeObjectURL(u),1000);}
 let voxInput=document.createElement('input');voxInput.type='file';voxInput.accept='.vox';voxInput.hidden=true;document.body.appendChild(voxInput);voxInput.onchange=async()=>{try{if(voxInput.files[0])await importVoxFile(voxInput.files[0]);toast('VOX importé');}catch(e){toast('Import VOX : '+e.message,4000)}voxInput.value='';};
 
 /* ----- Menu du modèle ----- */
@@ -4558,6 +4565,95 @@ function buildJSON(a){ const map=blocksMap(a), b=mapBounds(map);
     note:'Plan de construction. Le moteur V0.7.5.4 ne lit pas encore ce fichier : il décrit les voxels et les matières que les Sonders doivent poser.'}; }
 bInit(); bInitButtons();
 
+/* ================================================================
+   REV 2.8 · VERSION APK (Capacitor) ET SAUVEGARDES AUTOMATIQUES
+   Dans l'APK, les données sont dans l'espace privé de l'application
+   (le nettoyage de Chrome ne les touche pas) et une copie complète est
+   écrite d'elle-même dans Documents/SonderStudio/Sauvegardes.
+   Dans le navigateur, rien ne change, sauf la sauvegarde complète (.json)
+   téléchargeable et restaurable.
+   ================================================================ */
+const NATIVE=!!(window.Capacitor&&typeof Capacitor.isNativePlatform==='function'&&Capacitor.isNativePlatform());
+const N_ROOT='SonderStudio', N_BACKUPS=N_ROOT+'/Sauvegardes', N_EXPORTS=N_ROOT+'/Exports';
+const NFS=(m,o)=>Capacitor.nativePromise('Filesystem',m,o);
+const BACKUP_GAP=10*60*1000;
+let backupDirty=false, backupTimer=null, backupRunning=false, backupError=null;
+
+async function blobToB64(blob){ const u=await blobToDataURL(blob); return u.slice(u.indexOf(',')+1); }
+// Écriture par morceaux : évite de faire passer des dizaines de Mo d'un coup par le pont natif.
+async function nativeWriteText(path,text){ const CH=2*1024*1024;
+  await NFS('writeFile',{path,data:text.slice(0,CH),directory:'DOCUMENTS',encoding:'utf8',recursive:true});
+  for(let i=CH;i<text.length;i+=CH) await NFS('appendFile',{path,data:text.slice(i,i+CH),directory:'DOCUMENTS',encoding:'utf8'});
+  return (await NFS('getUri',{path,directory:'DOCUMENTS'})).uri; }
+async function nativeWriteBlob(path,blob){ const b64=await blobToB64(blob), CH=4*1024*1024; // multiple de 4
+  await NFS('writeFile',{path,data:b64.slice(0,CH),directory:'DOCUMENTS',recursive:true});
+  for(let i=CH;i<b64.length;i+=CH) await NFS('appendFile',{path,data:b64.slice(i,i+CH),directory:'DOCUMENTS'});
+  return (await NFS('getUri',{path,directory:'DOCUMENTS'})).uri; }
+async function nativeShare(uri,title){ try{ await Capacitor.nativePromise('Share','share',{title,dialogTitle:title,files:[uri]}); }catch(e){ if(!/cancel/i.test(String(e?.message||e))) toast('Partage impossible : '+(e?.message||e),3500); } }
+async function nativeExport(blob,name){
+  let uri; try{ uri=await nativeWriteBlob(N_EXPORTS+'/'+name,blob); }catch(e){ toast('Enregistrement impossible : '+(e?.message||e),4000); return; }
+  const v=await sheet(`<h3>Fichier enregistré</h3><p>${esc(name)}<br><span class="muted">Dans Documents › SonderStudio › Exports (application « Mes fichiers »).</span></p><div class="menu-list"><button data-v="share"><span>↗</span>Envoyer vers… (Drive, mail, PC)</button></div><div class="acts"><button data-v="ok" class="primary">OK</button></div>`);
+  if(v==='share') nativeShare(uri,name); }
+
+/* ----- Sauvegarde complète (.json) : exacte, sans perte ----- */
+async function backupPayload(){ const all=(await DB.all())||[];
+  return JSON.stringify({format:'sonder-backup',formatVersion:1,studioVersion:VERSION,createdAt:new Date().toISOString(),assetCount:all.filter(a=>!a.deletedAt).length,settings,assets:all}); }
+const stamp=()=>{ const d=new Date(), p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_${p(d.getHours())}h${p(d.getMinutes())}`; };
+async function runBackup(reason){
+  if(!NATIVE||backupRunning) return false; backupRunning=true; clearTimeout(backupTimer);
+  try{ const name=`Sonder_sauvegarde_${stamp()}.json`; await nativeWriteText(N_BACKUPS+'/'+name,await backupPayload());
+    backupDirty=false; backupError=null; settings.lastBackup=new Date().toISOString(); settings.lastBackupName=name; await DB.set('settings',settings); await pruneBackups(); if(route.view==='home') renderHome(); return true; }
+  catch(e){ backupError=String(e?.message||e); console.warn('sauvegarde',e); if(route.view==='home') renderHome(); return false; }
+  finally{ backupRunning=false; } }
+async function listBackups(){ try{ const r=await NFS('readdir',{path:N_BACKUPS,directory:'DOCUMENTS'}); return (r.files||[]).filter(f=>/^Sonder_sauvegarde_.*\.json$/.test(f.name||f)).map(f=>typeof f==='string'?{name:f}:f).sort((p,q)=>q.name.localeCompare(p.name)); }catch{ return []; } }
+// On garde les 8 plus récentes et la dernière de chacun des 14 derniers jours.
+async function pruneBackups(){ const L=await listBackups(), keep=new Set(L.slice(0,8).map(f=>f.name)), days=new Set();
+  for(const f of L){ const d=f.name.slice(18,28); if(!days.has(d)&&days.size<14){ days.add(d); keep.add(f.name); } }
+  for(const f of L) if(!keep.has(f.name)){ try{ await NFS('deleteFile',{path:N_BACKUPS+'/'+f.name,directory:'DOCUMENTS'}); }catch{} } }
+function noteChange(){ if(!NATIVE) return; backupDirty=true; clearTimeout(backupTimer);
+  const since=Date.now()-(Date.parse(settings.lastBackup||0)||0), wait=since>=BACKUP_GAP?20000:BACKUP_GAP-since+1000;
+  backupTimer=setTimeout(()=>runBackup('auto'),wait); }
+document.addEventListener('visibilitychange',()=>{ if(NATIVE&&document.visibilityState==='hidden'&&backupDirty) runBackup('pause'); });
+function backupAgo(){ if(!settings.lastBackup) return null; const m=Math.round((Date.now()-Date.parse(settings.lastBackup))/60000);
+  return m<1?'à l’instant':m<60?`il y a ${m} min`:m<1440?`il y a ${Math.round(m/60)} h`:`il y a ${Math.round(m/1440)} j`; }
+function backupPill(){ if(!NATIVE) return null;
+  if(backupError) return `<span class="pill warn" title="${esc(backupError)}">Sauvegarde auto en échec</span>`;
+  const a=backupAgo(); return a?`<span class="pill ok">Sauvegardé ${a}</span>`:'<span class="pill">Sauvegarde auto activée</span>'; }
+
+/* ----- Restauration d'une sauvegarde complète ----- */
+async function restoreBackupText(text,label){
+  let data; try{ data=JSON.parse(text); }catch{ toast('Fichier illisible : ce n’est pas une sauvegarde Sonder',4000); return false; }
+  if(data.format!=='sonder-backup'||!Array.isArray(data.assets)){ toast('Ce fichier n’est pas une sauvegarde complète Sonder',4000); return false; }
+  const live=data.assets.filter(a=>!a.deletedAt).length, d=new Date(data.createdAt);
+  if(!await confirmBox('Restaurer cette sauvegarde ?',`${label||''}${label?' · ':''}${live} asset(s), du ${d.toLocaleDateString('fr-FR')} à ${d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}. Les assets de même identifiant sont remplacés par leur version sauvegardée ; les autres restent en place.`,'Restaurer')) return false;
+  toast('Restauration…',10000);
+  if(NATIVE&&assets.length){ try{ await runBackup('avant restauration'); }catch{} }
+  for(const a of data.assets){ if(!a?.id) continue; const n=normalizeAsset(a); if(a.deletedAt) n.deletedAt=a.deletedAt; await DB.req('assets','readwrite',s=>s.put(n)); }
+  if(data.settings){ const keep={lastBackup:settings.lastBackup,lastBackupName:settings.lastBackupName}; settings={...settings,...data.settings,...keep}; await DB.set('settings',settings); }
+  toast(`${live} asset(s) restauré(s)`,2500); setTimeout(()=>location.reload(),900); return true; }
+async function backupsSheet(){
+  if(!NATIVE){ const v=await sheet(`<h3>Sauvegardes</h3><p>Dans le navigateur, le studio ne peut pas écrire de fichier tout seul. Télécharge régulièrement une sauvegarde complète et garde-la hors du téléphone (Drive, PC).</p><p class="muted">Dans la version APK, une copie est enregistrée automatiquement dans Documents › SonderStudio › Sauvegardes.</p><div class="menu-list"><button data-v="dl"><span>⇩</span>Télécharger une sauvegarde complète</button><button data-v="file"><span>⇧</span>Restaurer depuis un fichier…</button></div><div class="acts"><button data-v="no" class="primary">Fermer</button></div>`);
+    if(v==='dl'){ const blob=new Blob([await backupPayload()],{type:'application/json'}); downloadBlob(blob,`Sonder_sauvegarde_${stamp()}.json`); settings.lastExport=new Date().toISOString(); saveSettings(); toast('Sauvegarde téléchargée'); }
+    if(v==='file') $('#zipInput').click(); return; }
+  const L=await listBackups(), fmt=n=>n.replace(/^Sonder_sauvegarde_(\d{4})-(\d\d)-(\d\d)_(\d\d)h(\d\d)\.json$/,(m,y,mo,d,h,mi)=>`${d}/${mo}/${y} à ${h}:${mi}`);
+  const v=await sheet(`<h3>Sauvegardes</h3><p class="muted">Copie automatique de tout le studio après tes modifications (au plus toutes les 10 minutes) et quand tu quittes l’app. Dossier : Documents › SonderStudio › Sauvegardes. On garde les 8 plus récentes et une par jour sur 14 jours.</p>
+    ${backupError?`<div class="gap gap-err">⚠ Dernière sauvegarde en échec : ${esc(backupError)}</div>`:''}
+    <div class="menu-list"><button data-v="now"><span>💾</span>Sauvegarder maintenant</button>
+    ${L.map((f,i)=>`<div class="trash-row"><span class="bk-ico">🗂</span><div><b>${esc(fmt(f.name))}</b><br><small class="muted">${f.size?(f.size/1048576).toFixed(1)+' Mo':''}</small></div><button data-v="r${i}">Restaurer</button><button data-v="s${i}" class="icon ghost" aria-label="Envoyer">↗</button></div>`).join('')}
+    ${L.length?'':'<p class="muted">Aucune sauvegarde visible pour l’instant.</p>'}
+    <button data-v="file"><span>⇧</span>Restaurer depuis un fichier…</button></div>
+    <p class="muted pv-small">Après une réinstallation, Android peut cacher à l’app les anciennes sauvegardes : utilise « Restaurer depuis un fichier » et choisis-la dans Documents › SonderStudio › Sauvegardes.</p>
+    <div class="acts"><button data-v="no" class="primary">Fermer</button></div>`);
+  if(!v||v==='no') return;
+  if(v==='now'){ toast('Sauvegarde…',4000); const ok=await runBackup('manuel'); toast(ok?'Sauvegarde enregistrée':'Sauvegarde impossible : '+backupError,3500); return backupsSheet(); }
+  if(v==='file') return $('#zipInput').click();
+  const f=L[+v.slice(1)]; if(!f) return;
+  if(v[0]==='s'){ try{ const r=await NFS('getUri',{path:N_BACKUPS+'/'+f.name,directory:'DOCUMENTS'}); nativeShare(r.uri,f.name); }catch(e){ toast('Fichier introuvable',3000); } return; }
+  try{ const r=await NFS('readFile',{path:N_BACKUPS+'/'+f.name,directory:'DOCUMENTS',encoding:'utf8'}); await restoreBackupText(r.data,fmt(f.name)); }
+  catch(e){ toast('Lecture impossible : utilise « Restaurer depuis un fichier »',4000); }
+}
+$('#btnBackups').onclick=()=>backupsSheet();
+
 /* ================= Démarrage ================= */
 (async function init(){
   try{ await DB.open(); const all=((await DB.all())||[]).map(normalizeAsset); trash=all.filter(a=>a.deletedAt); assets=all.filter(a=>!a.deletedAt); refreshBiomeList(); const st=await DB.get('settings'); if(st) settings={...settings,...st}; settings.poseLibrary=Array.isArray(settings.poseLibrary)?settings.poseLibrary:[]; }
@@ -4567,7 +4663,8 @@ bInit(); bInitButtons();
   try{ const sv=await DB.get('builtinSeed'); if(sv!==6){ if(sv>=5) toast('Installation des constructions en voxels terrain…',6000); else if(sv>=1) toast(sv===4?'Installation des 24 matières voxel du moteur…':sv===3?'Installation des biomes et des matières du moteur…':sv===2?'Installation des constructions et des biomes du moteur…':'Installation de la faune, de la flore et des biomes du moteur…',8000); const n=await seedBuiltins(false); await upgradeBuiltinEco(); if(sv>=1&&sv<6){ for(const b of assets.filter(x=>x.type==='model'&&/^bt_/.test(x.builtin?.key||'')&&x.createdAt===x.updatedAt)){ const e=builtinCatalog().find(e=>e.key===b.builtin.key); if(!e) continue; const n=await makeBuiltin(e); assets=assets.filter(x=>x.id!==b.id); assets.push(n); await DB.req('assets','readwrite',s=>s.put(n)); } } await DB.set('builtinSeed',6); refreshBiomeList(); if(sv===1&&n) toast(n+' modèles du moteur ajoutés à ta bibliothèque',4000); } }catch(e){ console.warn(e); }
   try{ if(navigator.storage?.persist && !(await navigator.storage.persisted())) navigator.storage.persist(); }catch{}
   history.replaceState({view:'home'},''); go({view:'home'}, false);
-  if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+  if(NATIVE){ setTimeout(()=>{ const age=Date.now()-(Date.parse(settings.lastBackup||0)||0); if(age>6*3600*1000) runBackup('démarrage'); },6000); }
+  if(!NATIVE && 'serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('service-worker.js').catch(()=>{});
 })();
 window.__sonder={ get trash(){return trash;}, get route(){return route;},  get ed(){return ed;}, get md(){return md;}, get assets(){return assets;} };
 })();

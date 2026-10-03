@@ -1,0 +1,28 @@
+SONDER STUDIO 2.8 · FABRIQUER L'APK AVEC GITHUB
+
+Le mot de passe de signature t'a été donné dans la conversation avec Claude.
+Garde-le précieusement (dans tes notes) : sans lui, impossible de fabriquer une mise à jour
+qui s'installe par-dessus l'app.
+
+1. Le secret (une seule fois)
+   Dépôt sonder-studio › Settings › Secrets and variables › Actions › New repository secret
+   Name : SONDER_KEYSTORE_PASSWORD     Secret : le mot de passe     › Add secret
+
+2. Les fichiers
+   Add file › Upload files › sélectionne tous les fichiers de ce dossier › Commit changes
+
+3. Activer la fabrication (une seule fois)
+   Ouvre apk.yml dans le dépôt › crayon (Edit) › dans le nom du fichier, remplace
+   « apk.yml » par « .github/workflows/apk.yml » (les « / » créent les dossiers)
+   › Commit changes
+
+4. Attendre
+   Onglet Actions : « APK Sonder Studio » tourne 5 à 10 minutes (rond orange, puis coche verte).
+
+5. Installer
+   Page d'accueil du dépôt › Releases › SonderStudio-2.8.apk › télécharger › ouvrir
+   Android demande d'autoriser l'installation depuis Chrome (ou « Mes fichiers ») : accepter.
+
+Mises à jour : à chaque nouvelle version, tu déposes le nouvel index.html comme d'habitude ;
+GitHub refabrique l'APK tout seul. Tu l'installes par-dessus l'ancien : les données restent.
+Ne désinstalle jamais l'app (cela effacerait ses données).

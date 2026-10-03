@@ -1,29 +1,22 @@
-Sonder Studio V2.7 — Portable
-Base : Sonder Studio V2.6
+Sonder Studio V2.8 — Version APK
+Base : Sonder Studio V2.7 (constructions en voxels terrain incluses)
 
-Constructions en voxels terrain
-- Nouvel éditeur de construction, séparé des modèles (animaux, agents, flore) :
-  1 cube = 1 voxel du monde (25 cm), sans couleur : chaque voxel est un bloc de la
-  bibliothèque Terrain et s'affiche avec sa texture. Même caméra que le jeu.
-- Palette = bibliothèque Terrain : les 25 matières du jeu, tes propres blocs, et l'historique.
-  « Bibliothèque » ouvre tous les blocs ; « Nouveau bloc généré » en crée un sans quitter l'éditeur.
-  Tes blocs perso sont marqués « ! » : inconnus du moteur.
-- Nouvelle matière : Bois extrait (la matière de construction du moteur, ID 19).
-- Outils : poser, retirer, rectangle (plein ou contour, avec hauteur), mur (ligne avec hauteur),
-  repeindre, pipette, étape, déplacer. On glisse le doigt pour poser en continu.
-- Travail niveau par niveau (▲ ▼) : ce qui est au-dessus est masqué, ou en transparence
-  avec « Voir au-dessus ». Vue 3D (4 orientations) ou vue de dessus « Plan ».
-- Sonder à l'échelle à côté de la construction (bouton 🧍).
-- Panneau Matières et chantier : dimensions en voxels et en mètres, nombre de voxels à
-  rassembler par matière, « ⇄ » pour remplacer une matière partout, étapes du chantier
-  (voir jusqu'à une étape, renommer).
-- Menu : pivoter d'un quart de tour, miroir, poser au sol, planche PNG, versions, export.
-- Export : build.json = liste de voxels [x, y, z, matière, étape] avec l'équivalent moteur
-  de chaque matière (nom et ID). Le moteur ne lit pas encore ce fichier.
-- Générateur de construction : il produit maintenant des voxels terrain ; on choisit la
-  matière des murs, piliers, toit, sol, étage et rampe.
-- Les 4 constructions du moteur sont refaites en voxels terrain (sol en terre, piliers et toit
-  en bois extrait, murs en terre). Celles que tu avais retouchées restent en ancien format :
-  ⋯ › « Convertir en voxels terrain » crée une copie en blocs (couleur la plus proche).
+1. Application Android (APK)
+- Même app, mêmes écrans. Les données sont rangées dans l'espace privé de l'application :
+  effacer les données de Chrome ou un nettoyage du navigateur ne les touche plus.
+- Elles ne disparaissent que si tu désinstalles l'app ou fais « Effacer les données »
+  dans les réglages Android. Pour mettre à jour, installe le nouvel APK par-dessus.
+- Exports et planches PNG : enregistrés dans Documents › SonderStudio › Exports,
+  avec un bouton « Envoyer vers… » (Drive, mail, PC).
 
-Tes assets et retouches de la V2.6 sont conservés.
+2. Sauvegardes automatiques (APK)
+- Copie complète du studio dans Documents › SonderStudio › Sauvegardes :
+  après tes modifications (au plus toutes les 10 minutes), quand tu quittes l'app,
+  et au démarrage si la dernière date de plus de 6 heures.
+- On garde les 8 plus récentes et une par jour sur 14 jours.
+- Accueil › Sauvegardes : sauvegarder maintenant, restaurer, envoyer une copie vers Drive.
+- L'accueil affiche « Sauvegardé il y a … », ou une alerte si la sauvegarde échoue.
+
+3. Dans le navigateur aussi
+- Accueil › Sauvegardes › « Télécharger une sauvegarde complète » (.json, exacte).
+- « Restaurer une sauvegarde » accepte les .json (sauvegarde complète) et les .zip (export).
