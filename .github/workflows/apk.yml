@@ -20,9 +20,9 @@ concurrency:
 
 jobs:
   apk:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Vérifier le mot de passe de signature
         env:
@@ -34,16 +34,21 @@ jobs:
           fi
           test -f sonder-release.keystore || { echo "::error::sonder-release.keystore absent à la racine du dépôt."; exit 1; }
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21
 
-      - uses: android-actions/setup-android@v3
+      - name: Préparer le SDK Android (déjà installé sur la machine GitHub)
+        run: |
+          SDKM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          echo "SDK : $ANDROID_HOME"
+          yes | "$SDKM" --licenses > /dev/null || true
+          "$SDKM" "platforms;android-36" "build-tools;36.0.0" > /dev/null || true
 
       - name: Préparer l'app web
         run: |
@@ -81,7 +86,7 @@ jobs:
             Pour mettre à jour, installe le nouvel APK par-dessus l'ancien : tes assets sont conservés.
             Ne désinstalle pas l'app (cela effacerait ses données) ; tes sauvegardes automatiques sont dans Documents/SonderStudio/Sauvegardes.
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: SonderStudio-apk
           path: SonderStudio-*.apk
